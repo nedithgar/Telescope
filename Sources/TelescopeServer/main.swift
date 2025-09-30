@@ -96,20 +96,26 @@ struct TelescopeServerMain {
                         // Map to lightweight serializable structure
                         let mapped = docs.map { doc in
                             let text: String = {
-                                // Try common property names
+                                // Try the actual property names from ScrubberKit's Document struct
                                 let mirror = Mirror(reflecting: doc)
                                 let candidates = [
+                                    mirror.descendant("textDocument"),  // Primary: cleaned plain text
+                                    mirror.descendant("document"),      // Fallback: raw HTML
                                     mirror.descendant("plainText"),
                                     mirror.descendant("content"),
                                     mirror.descendant("text"),
                                     mirror.descendant("body")
                                 ]
                                 for c in candidates {
-                                    if let s = c as? String, s.count > 0 { return s }
+                                    if let s = c as? String, !s.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                        return s
+                                    }
                                 }
-                                // Fallback: find first large string property
+                                // Last resort: find first non-empty string property
                                 for child in mirror.children {
-                                    if let s = child.value as? String, s.count > 0 { return s }
+                                    if let s = child.value as? String, !s.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                        return s
+                                    }
                                 }
                                 return ""
                             }()
