@@ -97,7 +97,7 @@ The Telescope server requires no additional configuration. It uses ScrubberKit's
 ### Default Behavior
 
 - **Result Limit**: 10-20 documents per search (configurable per request, clamped to this range)
-- **Text Truncation**: Each document is limited to 8,000 characters to optimize token usage
+- **Text Truncation**: Each document is limited to 20,000 characters to optimize token usage
 - **Thread Safety**: All operations are performed on the main thread as required by ScrubberKit
 - **ScrubberKit Setup**: Automatically configured on server startup via `ScrubberConfiguration.setup()`
 
@@ -154,7 +154,7 @@ Telescope uses a modern service-based architecture:
 3. **Tool Discovery** - Server advertises the `searchweb` tool via `ListTools` handler
 4. **Query Execution** - Assistant sends search queries through `CallTool` handler
 5. **Content Retrieval** - `TelescopeSearchService` uses ScrubberKit on main thread to fetch and clean web content
-6. **Results Delivery** - Cleaned text (up to 8,000 chars per document) is formatted and returned to the assistant
+6. **Results Delivery** - Cleaned text (up to 20,000 chars per document) is formatted and returned to the assistant
 
 ## 🧪 Testing
 
