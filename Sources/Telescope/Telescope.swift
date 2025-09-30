@@ -74,26 +74,37 @@ public struct TelescopeSearchService: Sendable {
     ///   - maxCharacters: Maximum number of characters (default: 20000)
     /// - Returns: Truncated text, preferably at a word boundary
     static func truncateText(_ text: String, maxCharacters: Int = 20_000) -> Substring {
-        // If text is already within limit, return as-is
-        if text.count <= maxCharacters {
+        // Fast path: attempt to derive the end index without traversing the entire string.
+        // Using index(_:offsetBy:limitedBy:) avoids an O(n) full count when the string is much longer.
+        guard let hardEnd = text.index(text.startIndex, offsetBy: maxCharacters, limitedBy: text.endIndex) else {
+            // String shorter than limit – return whole thing.
             return text[...]
         }
-        
-        // Get the prefix up to the limit
-        let truncated = text.prefix(maxCharacters)
-        
-        // Try to find the last word boundary (space, newline, or punctuation)
-        let boundaryCharacters = CharacterSet.whitespacesAndNewlines.union(.punctuationCharacters)
-        
-        // Search backwards from the end to find a good breaking point
-        if let lastIndex = truncated.lastIndex(where: { char in
-            char.unicodeScalars.allSatisfy { boundaryCharacters.contains($0) }
-        }) {
-            // Break at the word boundary
-            return text[..<lastIndex]
+
+        let slice = text[..<hardEnd] // Substring limited to maxCharacters
+
+        // Backward scan to find a word/punctuation boundary close to the end.
+        // Limit how far we scan backwards to avoid pathological O(k) cost on very large inputs.
+        // 512 is an empirical balance: usually finds a boundary quickly due to frequent whitespace.
+        let maxBackwardScan = 512
+        let boundarySet: CharacterSet = {
+            // Static-like cached set (captures once). Allocation cost negligible vs large text handling.
+            CharacterSet.whitespacesAndNewlines.union(.punctuationCharacters)
+        }()
+
+        var current = slice.endIndex
+        var scanned = 0
+        while current > slice.startIndex && scanned < maxBackwardScan {
+            scanned += 1
+            current = text.index(before: current)
+            let currentCharacter = text[current]
+            // If every scalar is boundary, we cut there (excluding that boundary char itself)
+            if currentCharacter.unicodeScalars.allSatisfy({ boundarySet.contains($0) }) {
+                return text[..<current]
+            }
         }
-        
-        // If no boundary found, just return the hard limit
-        return truncated
+
+        // Fallback: no boundary found in the scan window; return the hard slice.
+        return slice
     }
 }
