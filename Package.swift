@@ -12,6 +12,10 @@ let package = Package(
             name: "Telescope",
             targets: ["Telescope"]
         ),
+        .executable(
+            name: "telescope-server",
+            targets: ["TelescopeServer"]
+        )
     ],
     dependencies: [
         .package(url: "https://github.com/Lakr233/ScrubberKit.git", from: "0.1.0"),
@@ -24,6 +28,10 @@ let package = Package(
                 .product(name: "ScrubberKit", package: "ScrubberKit"),
                 .product(name: "MCP", package: "swift-sdk")
             ]
+        ),
+        .executableTarget(
+            name: "TelescopeServer",
+            dependencies: ["Telescope"]
         ),
         .testTarget(
             name: "TelescopeTests",
