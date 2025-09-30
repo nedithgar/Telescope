@@ -45,7 +45,7 @@ public struct TelescopeSearchService: Sendable {
                         SearchDocument(
                             title: document.title,
                             url: document.url.absoluteString,
-                            plainText: document.textDocument.prefix(8_000)
+                            plainText: Self.truncateText(document.textDocument, maxCharacters: 8_000)
                         )
                     }
                     continuation.resume(returning: mappedDocuments)
@@ -66,5 +66,34 @@ public struct TelescopeSearchService: Sendable {
             output += document.plainText + "\n\n"
         }
         return output
+    }
+    
+    /// Intelligently truncate text to a maximum character count
+    /// - Parameters:
+    ///   - text: The text to truncate
+    ///   - maxCharacters: Maximum number of characters (default: 8000)
+    /// - Returns: Truncated text, preferably at a word boundary
+    static func truncateText(_ text: String, maxCharacters: Int = 8_000) -> Substring {
+        // If text is already within limit, return as-is
+        if text.count <= maxCharacters {
+            return text[...]
+        }
+        
+        // Get the prefix up to the limit
+        let truncated = text.prefix(maxCharacters)
+        
+        // Try to find the last word boundary (space, newline, or punctuation)
+        let boundaryCharacters = CharacterSet.whitespacesAndNewlines.union(.punctuationCharacters)
+        
+        // Search backwards from the end to find a good breaking point
+        if let lastIndex = truncated.lastIndex(where: { char in
+            char.unicodeScalars.allSatisfy { boundaryCharacters.contains($0) }
+        }) {
+            // Break at the word boundary
+            return text[..<lastIndex]
+        }
+        
+        // If no boundary found, just return the hard limit
+        return truncated
     }
 }
