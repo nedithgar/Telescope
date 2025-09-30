@@ -15,9 +15,9 @@ struct MCPService: Service {
             logger.info("Client connected: \(clientInfo.name) v\(clientInfo.version)")
         }
         // Keep the service alive until cancelled
-    // Effectively run indefinitely (~100 years) using seconds
-    let secondsInYear: Int64 = 365 * 24 * 60 * 60
-    try await Task.sleep(for: .seconds(secondsInYear * 100))
+        // Effectively run indefinitely (~100 years) using seconds
+        let secondsInYear: Int64 = 365 * 24 * 60 * 60
+        try await Task.sleep(for: .seconds(secondsInYear * 100))
     }
 
     func shutdown() async {
@@ -82,48 +82,48 @@ struct TelescopeServerMain {
             guard !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
                 return .init(content: [.text("Missing required 'query' argument")], isError: true)
             }
-            let limitRaw = params.arguments?["limit"]?.intValue ?? params.arguments?["limit"]?.doubleValue.map { Int($0) }
-            var limit = limitRaw ?? 10
+            let rawLimit = params.arguments?["limit"]?.intValue ?? params.arguments?["limit"]?.doubleValue.map { Int($0) }
+            var limit = rawLimit ?? 10
             if limit < 10 { limit = 10 }
             if limit > 20 { limit = 20 }
 
             // ScrubberKit must be executed on main thread per its design (asserts); we coordinate via continuation
             let searchLimit = limit
-            let documents: [AnyDocument] = await withCheckedContinuation { continuation in
+            let documents: [SearchDocument] = await withCheckedContinuation { continuation in
                 DispatchQueue.main.async {
                     let scrubber = Scrubber(query: query)
-                    scrubber.run(limitation: searchLimit) { docs in
+                    scrubber.run(limitation: searchLimit) { documents in
                         // Map to lightweight serializable structure using direct property access
-                        let mapped = docs.map { doc in
-                            AnyDocument(
-                                title: doc.title,
-                                url: doc.url.absoluteString,
-                                plainText: doc.textDocument.prefix(8_000)
+                        let mappedDocuments = documents.map { document in
+                            SearchDocument(
+                                title: document.title,
+                                url: document.url.absoluteString,
+                                plainText: document.textDocument.prefix(8_000)
                             )
                         }
-                        continuation.resume(returning: mapped)
+                        continuation.resume(returning: mappedDocuments)
                     } onProgress: { _ in }
                 }
             }
             // Build text output. Each document separated with markers.
             var output = "Search results for: \(query)\n\n"
-            for (idx, doc) in documents.enumerated() {
-                output += "# Result \(idx + 1): \(doc.title)\nURL: \(doc.url)\n\n"
-                output += doc.plainText + "\n\n"
+            for (index, document) in documents.enumerated() {
+                output += "# Result \(index + 1): \(document.title)\nURL: \(document.url)\n\n"
+                output += document.plainText + "\n\n"
             }
             return .init(content: [.text(output)], isError: false)
         }
 
         let transport = StdioTransport(logger: logger)
         let mcpService = MCPService(server: server, transport: transport, logger: logger)
-        let group = ServiceGroup(
+        let serviceGroup = ServiceGroup(
             services: [mcpService],
             gracefulShutdownSignals: [.sigint, .sigterm],
             cancellationSignals: [],
             logger: logger
         )
         do {
-            try await group.run()
+            try await serviceGroup.run()
         } catch {
             logger.error("Service group terminated with error: \(String(describing: error))")
             exit(1)
@@ -132,10 +132,11 @@ struct TelescopeServerMain {
 }
 
 // Lightweight document representation to avoid exposing ScrubberKit internals directly
-struct AnyDocument: Codable {
+struct SearchDocument: Codable {
     let title: String
     let url: String
     let plainText: String
+    
     init(title: String, url: String, plainText: Substring) {
         self.title = title
         self.url = url
