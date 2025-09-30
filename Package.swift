@@ -19,7 +19,8 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/Lakr233/ScrubberKit.git", from: "0.1.0"),
-        .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", from: "0.10.0")
+        .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", from: "0.10.0"),
+        .package(url: "https://github.com/swift-server/swift-service-lifecycle.git", from: "2.3.0")
     ],
     targets: [
         .target(
@@ -31,7 +32,10 @@ let package = Package(
         ),
         .executableTarget(
             name: "TelescopeServer",
-            dependencies: ["Telescope"]
+            dependencies: [
+                "Telescope",
+                .product(name: "ServiceLifecycle", package: "swift-service-lifecycle")
+            ]
         ),
         .testTarget(
             name: "TelescopeTests",

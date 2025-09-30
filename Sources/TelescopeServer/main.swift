@@ -3,6 +3,28 @@ import MCP
 import Telescope
 import ScrubberKit
 import Logging
+import ServiceLifecycle
+
+struct MCPService: Service {
+    let server: Server
+    let transport: Transport
+    let logger: Logger
+
+    func run() async throws {
+        try await server.start(transport: transport) { clientInfo, _ in
+            logger.info("Client connected: \(clientInfo.name) v\(clientInfo.version)")
+        }
+        // Keep the service alive until cancelled
+    // Effectively run indefinitely (~100 years) using seconds
+    let secondsInYear: Int64 = 365 * 24 * 60 * 60
+    try await Task.sleep(for: .seconds(secondsInYear * 100))
+    }
+
+    func shutdown() async {
+        logger.info("Shutting down MCP server")
+        await server.stop()
+    }
+}
 
 @main
 struct TelescopeServerMain {
@@ -104,14 +126,17 @@ struct TelescopeServerMain {
         }
 
         let transport = StdioTransport(logger: logger)
+        let mcpService = MCPService(server: server, transport: transport, logger: logger)
+        let group = ServiceGroup(
+            services: [mcpService],
+            gracefulShutdownSignals: [.sigint, .sigterm],
+            cancellationSignals: [],
+            logger: logger
+        )
         do {
-            try await server.start(transport: transport) { clientInfo, _ in
-                logger.info("Client connected: \(clientInfo.name) v\(clientInfo.version)")
-            }
-            // Suspend forever; server handles lifecycle
-            await withCheckedContinuation { (_: CheckedContinuation<Void, Never>) in }
+            try await group.run()
         } catch {
-            logger.error("Failed to start server: \(String(describing: error))")
+            logger.error("Service group terminated with error: \(String(describing: error))")
             exit(1)
         }
     }
