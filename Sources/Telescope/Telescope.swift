@@ -76,52 +76,51 @@ public struct TelescopeSearchService: Sendable {
     static func truncateText(_ text: String, maxCharacters: Int = 20_000) -> Substring {
         // Fast path: attempt to derive the end index without traversing the entire string.
         // Using index(_:offsetBy:limitedBy:) avoids an O(n) full count when the string is much longer.
-        guard let hardEnd = text.index(text.startIndex, offsetBy: maxCharacters, limitedBy: text.endIndex) else {
+        guard let endLimitIndex = text.index(text.startIndex, offsetBy: maxCharacters, limitedBy: text.endIndex) else {
             // String shorter than limit – return whole thing.
             return text[...]
         }
 
-        let slice = text[..<hardEnd] // Substring limited to maxCharacters
+        let limitedSlice = text[..<endLimitIndex] // Substring limited to maxCharacters
 
         // Prioritized backward scan for a natural cut point:
         //  1. Newline (paragraph break) -> strongest semantic boundary
         //  2. Sentence punctuation (. ! ? ; :) -> next best
         //  3. Any remaining whitespace or punctuation -> fallback soft boundary
         // Limit the scan window to avoid pathological cost on huge inputs.
-        let maxBackwardScan = 512
-        let whitespaceAndPunct = CharacterSet.whitespacesAndNewlines.union(.punctuationCharacters)
-        let newlineSet = CharacterSet.newlines
-        let sentencePunctuation: Set<Character> = [".", "!", "?", ";", ":"] // can extend with locale-specific marks
+        let backwardScanLimit = 512
+        let whitespaceAndPunctuation = CharacterSet.whitespacesAndNewlines.union(.punctuationCharacters)
+        let newlineCharacterSet = CharacterSet.newlines
+        let sentenceTerminators: Set<Character> = [".", "!", "?", ";", ":"] // extendable
 
-        var sentenceCandidate: String.Index? = nil
-        var genericCandidate: String.Index? = nil
+        var sentenceBoundaryIndex: String.Index? = nil
+        var softBoundaryIndex: String.Index? = nil
 
-        var currentIndex = slice.endIndex
-        var scannedCount = 0
-        while currentIndex > slice.startIndex && scannedCount < maxBackwardScan {
-            scannedCount += 1
-            currentIndex = text.index(before: currentIndex)
-            let currentCharacter = text[currentIndex]
+        var scanIndex = limitedSlice.endIndex
+        var scannedCharacters = 0
+        while scanIndex > limitedSlice.startIndex && scannedCharacters < backwardScanLimit {
+            scannedCharacters += 1
+            scanIndex = text.index(before: scanIndex)
+            let character = text[scanIndex]
 
-            // Classify character by priority.
-            // 1. Newline (any scalar in newline set)
-            if currentCharacter.unicodeScalars.allSatisfy({ newlineSet.contains($0) }) {
-                return text[..<currentIndex] // Highest priority – cut immediately
+            // Priority 1: newline
+            if character.unicodeScalars.allSatisfy({ newlineCharacterSet.contains($0) }) {
+                return text[..<scanIndex]
             }
-            // 2. Sentence punctuation (single punctuation mark)
-            if sentenceCandidate == nil && sentencePunctuation.contains(currentCharacter) {
-                sentenceCandidate = currentIndex
+            // Priority 2: sentence terminator
+            if sentenceBoundaryIndex == nil && sentenceTerminators.contains(character) {
+                sentenceBoundaryIndex = scanIndex
                 continue
             }
-            // 3. Generic boundary (whitespace or punctuation cluster)
-            if genericCandidate == nil && currentCharacter.unicodeScalars.allSatisfy({ whitespaceAndPunct.contains($0) }) {
-                genericCandidate = currentIndex
+            // Priority 3: any whitespace or punctuation cluster
+            if softBoundaryIndex == nil && character.unicodeScalars.allSatisfy({ whitespaceAndPunctuation.contains($0) }) {
+                softBoundaryIndex = scanIndex
             }
         }
 
-        if let index = sentenceCandidate { return text[..<index] }
-        if let index = genericCandidate { return text[..<index] }
+        if let sentenceBoundaryIndex { return text[..<sentenceBoundaryIndex] }
+        if let softBoundaryIndex { return text[..<softBoundaryIndex] }
         // No boundary found in scan window – return hard slice.
-        return slice
+        return limitedSlice
     }
 }
