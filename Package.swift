@@ -11,12 +11,14 @@ let package = Package(
         ),
     ],
     dependencies: [
+        .package(url: "https://github.com/Lakr233/ScrubberKit.git", from: "0.1.0"),
         .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", from: "0.10.0")
     ],
     targets: [
         .target(
             name: "Telescope",
             dependencies: [
+                .product(name: "ScrubberKit", package: "ScrubberKit"),
                 .product(name: "MCP", package: "swift-sdk")
             ]
         ),
