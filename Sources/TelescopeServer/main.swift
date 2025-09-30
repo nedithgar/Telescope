@@ -29,6 +29,9 @@ struct MCPService: Service {
 @main
 struct TelescopeServerMain {
     static func main() async {
+        // Setup ScrubberKit (required before first use)
+        ScrubberConfiguration.setup()
+        
         // Setup logging (optional but helpful)
         LoggingSystem.bootstrap { label in
             var handler = StreamLogHandler.standardOutput(label: label)
