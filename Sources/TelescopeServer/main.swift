@@ -93,33 +93,13 @@ struct TelescopeServerMain {
                 DispatchQueue.main.async {
                     let scrubber = Scrubber(query: query)
                     scrubber.run(limitation: searchLimit) { docs in
-                        // Map to lightweight serializable structure
+                        // Map to lightweight serializable structure using direct property access
                         let mapped = docs.map { doc in
-                            let text: String = {
-                                // Try the actual property names from ScrubberKit's Document struct
-                                let mirror = Mirror(reflecting: doc)
-                                let candidates = [
-                                    mirror.descendant("textDocument"),  // Primary: cleaned plain text
-                                    mirror.descendant("document"),      // Fallback: raw HTML
-                                    mirror.descendant("plainText"),
-                                    mirror.descendant("content"),
-                                    mirror.descendant("text"),
-                                    mirror.descendant("body")
-                                ]
-                                for c in candidates {
-                                    if let s = c as? String, !s.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                        return s
-                                    }
-                                }
-                                // Last resort: find first non-empty string property
-                                for child in mirror.children {
-                                    if let s = child.value as? String, !s.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                        return s
-                                    }
-                                }
-                                return ""
-                            }()
-                            return AnyDocument(title: (Mirror(reflecting: doc).descendant("title") as? String) ?? "", url: (Mirror(reflecting: doc).descendant("url") as? URL)?.absoluteString ?? "", plainText: text.prefix(8_000))
+                            AnyDocument(
+                                title: doc.title,
+                                url: doc.url.absoluteString,
+                                plainText: doc.textDocument.prefix(8_000)
+                            )
                         }
                         continuation.resume(returning: mapped)
                     } onProgress: { _ in }
