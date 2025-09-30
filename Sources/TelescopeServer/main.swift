@@ -64,7 +64,7 @@ struct TelescopeServerMain {
                         ]),
                         "limit": .object([
                             "type": .string("number"),
-                            "description": .string("Maximum number of documents to return (default 5, max 20)")
+                            "description": .string("Maximum number of documents to return (default 10, max 20)")
                         ])
                     ]),
                     "required": .array([.string("query")])
@@ -83,8 +83,8 @@ struct TelescopeServerMain {
                 return .init(content: [.text("Missing required 'query' argument")], isError: true)
             }
             let limitRaw = params.arguments?["limit"]?.intValue ?? params.arguments?["limit"]?.doubleValue.map { Int($0) }
-            var limit = limitRaw ?? 5
-            if limit < 1 { limit = 1 }
+            var limit = limitRaw ?? 10
+            if limit < 10 { limit = 10 }
             if limit > 20 { limit = 20 }
 
             // ScrubberKit must be executed on main thread per its design (asserts); we coordinate via continuation
