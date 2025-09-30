@@ -83,28 +83,45 @@ public struct TelescopeSearchService: Sendable {
 
         let slice = text[..<hardEnd] // Substring limited to maxCharacters
 
-        // Backward scan to find a word/punctuation boundary close to the end.
-        // Limit how far we scan backwards to avoid pathological O(k) cost on very large inputs.
-        // 512 is an empirical balance: usually finds a boundary quickly due to frequent whitespace.
+        // Prioritized backward scan for a natural cut point:
+        //  1. Newline (paragraph break) -> strongest semantic boundary
+        //  2. Sentence punctuation (. ! ? ; :) -> next best
+        //  3. Any remaining whitespace or punctuation -> fallback soft boundary
+        // Limit the scan window to avoid pathological cost on huge inputs.
         let maxBackwardScan = 512
-        let boundarySet: CharacterSet = {
-            // Static-like cached set (captures once). Allocation cost negligible vs large text handling.
-            CharacterSet.whitespacesAndNewlines.union(.punctuationCharacters)
-        }()
+        let whitespaceAndPunct = CharacterSet.whitespacesAndNewlines.union(.punctuationCharacters)
+        let newlineSet = CharacterSet.newlines
+        let sentencePunctuation: Set<Character> = [".", "!", "?", ";", ":"] // can extend with locale-specific marks
 
-        var current = slice.endIndex
-        var scanned = 0
-        while current > slice.startIndex && scanned < maxBackwardScan {
-            scanned += 1
-            current = text.index(before: current)
-            let currentCharacter = text[current]
-            // If every scalar is boundary, we cut there (excluding that boundary char itself)
-            if currentCharacter.unicodeScalars.allSatisfy({ boundarySet.contains($0) }) {
-                return text[..<current]
+        var sentenceCandidate: String.Index? = nil
+        var genericCandidate: String.Index? = nil
+
+        var currentIndex = slice.endIndex
+        var scannedCount = 0
+        while currentIndex > slice.startIndex && scannedCount < maxBackwardScan {
+            scannedCount += 1
+            currentIndex = text.index(before: currentIndex)
+            let currentCharacter = text[currentIndex]
+
+            // Classify character by priority.
+            // 1. Newline (any scalar in newline set)
+            if currentCharacter.unicodeScalars.allSatisfy({ newlineSet.contains($0) }) {
+                return text[..<currentIndex] // Highest priority – cut immediately
+            }
+            // 2. Sentence punctuation (single punctuation mark)
+            if sentenceCandidate == nil && sentencePunctuation.contains(currentCharacter) {
+                sentenceCandidate = currentIndex
+                continue
+            }
+            // 3. Generic boundary (whitespace or punctuation cluster)
+            if genericCandidate == nil && currentCharacter.unicodeScalars.allSatisfy({ whitespaceAndPunct.contains($0) }) {
+                genericCandidate = currentIndex
             }
         }
 
-        // Fallback: no boundary found in the scan window; return the hard slice.
+        if let index = sentenceCandidate { return text[..<index] }
+        if let index = genericCandidate { return text[..<index] }
+        // No boundary found in scan window – return hard slice.
         return slice
     }
 }
