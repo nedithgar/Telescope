@@ -45,7 +45,7 @@ public struct TelescopeSearchService: Sendable {
                         SearchDocument(
                             title: document.title,
                             url: document.url.absoluteString,
-                            plainText: Self.truncateText(document.textDocument, maxCharacters: 8_000)
+                            plainText: Self.truncateText(document.textDocument, maxCharacters: 20_000)
                         )
                     }
                     continuation.resume(returning: mappedDocuments)
@@ -71,9 +71,9 @@ public struct TelescopeSearchService: Sendable {
     /// Intelligently truncate text to a maximum character count
     /// - Parameters:
     ///   - text: The text to truncate
-    ///   - maxCharacters: Maximum number of characters (default: 8000)
+    ///   - maxCharacters: Maximum number of characters (default: 20000)
     /// - Returns: Truncated text, preferably at a word boundary
-    static func truncateText(_ text: String, maxCharacters: Int = 8_000) -> Substring {
+    static func truncateText(_ text: String, maxCharacters: Int = 20_000) -> Substring {
         // If text is already within limit, return as-is
         if text.count <= maxCharacters {
             return text[...]
