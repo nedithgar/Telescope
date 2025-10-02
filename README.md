@@ -60,9 +60,9 @@ Add to your Cursor settings:
 
 ### Prerequisites
 
-- macOS 15.0+ (Sequoia or later) - required by macOS 16 platform requirement
-- Swift 6.2+ (included with Xcode 16.4+)
-- Xcode 16.4+ with Command Line Tools
+- macOS 26.0+ 
+- Swift 6.2+ 
+- Xcode 26.0+ with Command Line Tools
 
 ### Build Commands
 
