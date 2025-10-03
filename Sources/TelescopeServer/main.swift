@@ -42,7 +42,7 @@ struct TelescopeServerMain {
 
         let server = Server(
             name: "TelescopeServer",
-            version: "0.0.1",
+            version: "0.0.2",
             capabilities: .init(
                 prompts: .init(listChanged: false),
                 resources: .init(subscribe: false, listChanged: false),
