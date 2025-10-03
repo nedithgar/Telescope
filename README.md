@@ -113,6 +113,16 @@ If you prefer the original search engine result ordering without heuristic mergi
 
 When disabled, the server logs: `Rerank disabled via --disable-rerank` on startup.
 
+### Adjusting Host Diversity Cap
+
+By default the balanced rerank profile limits results to 2 per hostname to improve diversity. You can change this with:
+
+```bash
+./.build/release/telescope-server --rerank-keep-per-host=3
+```
+
+Use a value > 0. Set a very large number to effectively disable the cap.
+
 ## 🛠️ MCP Tools Available
 
 ### `searchweb`

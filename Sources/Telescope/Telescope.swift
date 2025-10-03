@@ -20,8 +20,14 @@ public struct TelescopeSearchService: Sendable {
     /// Whether to apply URL re-ranking when performing searches.
     /// Enabled by default. Can be disabled via server CLI flag `--disable-rerank`.
     private let useRerank: Bool
+    /// Maximum number of results to keep per hostname when reranking (diversity cap).
+    /// Defaults to 2 under balanced profile. Set to nil to disable capping.
+    private let rerankKeepPerHostname: Int?
     
-    public init(useRerank: Bool = true) { self.useRerank = useRerank }
+    public init(useRerank: Bool = true, rerankKeepPerHostname: Int? = 2) {
+        self.useRerank = useRerank
+        self.rerankKeepPerHostname = rerankKeepPerHostname
+    }
     
     /// Perform a web search and return cleaned document excerpts
     /// - Parameters:
@@ -43,8 +49,21 @@ public struct TelescopeSearchService: Sendable {
             DispatchQueue.main.async {
                 let scrubber: Scrubber
                 if useRerank {
-                    // Provide a reranker seeded with the question (query) to enable BM25 based signal.
-                    let reranker = URLsReranker(question: query)
+                    // Balanced profile tuning:
+                    // - Reweights semantic relevance vs structural signals
+                    // - Adds per-host diversity cap (default 2)
+                    // - Slightly compresses score range and raises semantic weight
+                    let reranker = URLsReranker(
+                        freqFactor: 0.35,
+                        hostnameBoostFactor: 0.40,
+                        pathBoostFactor: 0.25,
+                        decayFactor: 0.65,
+                        bm25RerankFactor: 1.20,
+                        minBoost: 0.10,
+                        maxBoost: 4.0,
+                        question: query,
+                        keepKPerHostname: rerankKeepPerHostname
+                    )
                     let options = Scrubber.ScrubberOptions(urlsReranker: reranker)
                     scrubber = Scrubber(query: query, options: options)
                 } else {
