@@ -17,8 +17,17 @@ public struct SearchDocument: Codable, Sendable {
 
 /// Service for performing web searches using ScrubberKit
 public struct TelescopeSearchService: Sendable {
+    /// Whether to apply URL re-ranking when performing searches.
+    /// Enabled by default. Can be disabled via server CLI flag `--disable-rerank`.
+    private let useRerank: Bool
+    /// Maximum number of results to keep per hostname when reranking (diversity cap).
+    /// Defaults to 2 under balanced profile. Set to nil to disable capping.
+    private let rerankKeepPerHostname: Int?
     
-    public init() {}
+    public init(useRerank: Bool = true, rerankKeepPerHostname: Int? = 2) {
+        self.useRerank = useRerank
+        self.rerankKeepPerHostname = rerankKeepPerHostname
+    }
     
     /// Perform a web search and return cleaned document excerpts
     /// - Parameters:
@@ -38,7 +47,28 @@ public struct TelescopeSearchService: Sendable {
         // ScrubberKit must be executed on main thread per its design (asserts)
         return await withCheckedContinuation { continuation in
             DispatchQueue.main.async {
-                let scrubber = Scrubber(query: query)
+                let scrubber: Scrubber
+                if useRerank {
+                    // Balanced profile tuning:
+                    // - Reweights semantic relevance vs structural signals
+                    // - Adds per-host diversity cap (default 2)
+                    // - Slightly compresses score range and raises semantic weight
+                    let reranker = URLsReranker(
+                        freqFactor: 0.35,
+                        hostnameBoostFactor: 0.40,
+                        pathBoostFactor: 0.25,
+                        decayFactor: 0.65,
+                        bm25RerankFactor: 1.20,
+                        minBoost: 0.10,
+                        maxBoost: 4.0,
+                        question: query,
+                        keepKPerHostname: rerankKeepPerHostname
+                    )
+                    let options = Scrubber.ScrubberOptions(urlsReranker: reranker)
+                    scrubber = Scrubber(query: query, options: options)
+                } else {
+                    scrubber = Scrubber(query: query)
+                }
                 scrubber.run(limitation: adjustedLimit) { documents in
                     // Map to lightweight serializable structure using direct property access
                     let mappedDocuments = documents.map { document in
