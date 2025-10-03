@@ -56,7 +56,8 @@ struct TelescopeServerMain {
             var rerankKeepPerHost: Int? = 2 // balanced profile default
             if let keepFlagIndex = arguments.firstIndex(where: { $0.hasPrefix("--rerank-keep-per-host=") }) {
                 let valuePart = arguments[keepFlagIndex].split(separator: "=", maxSplits: 1).last.map(String.init)
-                if let valuePart, let intVal = Int(valuePart), intVal > 0 { rerankKeepPerHost = intVal } else { logger.warning("Ignored invalid --rerank-keep-per-host value; using default 2") }
+                if let valuePart, let intVal = Int(valuePart), intVal > 0 { rerankKeepPerHost = intVal }
+                else { logger.warning("Ignored invalid --rerank-keep-per-host value; using default 2") }
             }
             if disableRerank { logger.info("Rerank disabled via --disable-rerank") }
             logger.info("Rerank keep-per-host: \(rerankKeepPerHost.map(String.init) ?? "disabled")")
