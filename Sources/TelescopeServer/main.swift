@@ -50,13 +50,17 @@ struct TelescopeServerMain {
             )
         )
         
-        let searchService = TelescopeSearchService()
+    // CLI flag support: --disable-rerank to turn off ScrubberKit URL re-ranking
+    let arguments = CommandLine.arguments.dropFirst() // skip executable name
+    let disableRerank = arguments.contains("--disable-rerank")
+    if disableRerank { logger.info("Rerank disabled via --disable-rerank") }
+    let searchService = TelescopeSearchService(useRerank: !disableRerank)
 
         // ListTools handler exposing a single tool: searchweb
         await server.withMethodHandler(ListTools.self) { _ in
             let tool = Tool(
                 name: "searchweb",
-                description: "Search the web for a query and return cleaned textual page excerpts (using ScrubberKit)",
+                description: "Search the web for a query and return cleaned textual page excerpts (using ScrubberKit, rerank \(!disableRerank ? "enabled" : "disabled") )",
                 inputSchema: .object([
                     "type": .string("object"), // compatibility; SDK may not require explicit type
                     "properties": .object([

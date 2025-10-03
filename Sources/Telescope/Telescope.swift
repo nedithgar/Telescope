@@ -17,8 +17,11 @@ public struct SearchDocument: Codable, Sendable {
 
 /// Service for performing web searches using ScrubberKit
 public struct TelescopeSearchService: Sendable {
+    /// Whether to apply URL re-ranking when performing searches.
+    /// Enabled by default. Can be disabled via server CLI flag `--disable-rerank`.
+    private let useRerank: Bool
     
-    public init() {}
+    public init(useRerank: Bool = true) { self.useRerank = useRerank }
     
     /// Perform a web search and return cleaned document excerpts
     /// - Parameters:
@@ -38,7 +41,15 @@ public struct TelescopeSearchService: Sendable {
         // ScrubberKit must be executed on main thread per its design (asserts)
         return await withCheckedContinuation { continuation in
             DispatchQueue.main.async {
-                let scrubber = Scrubber(query: query)
+                let scrubber: Scrubber
+                if useRerank {
+                    // Provide a reranker seeded with the question (query) to enable BM25 based signal.
+                    let reranker = URLsReranker(question: query)
+                    let options = Scrubber.ScrubberOptions(urlsReranker: reranker)
+                    scrubber = Scrubber(query: query, options: options)
+                } else {
+                    scrubber = Scrubber(query: query)
+                }
                 scrubber.run(limitation: adjustedLimit) { documents in
                     // Map to lightweight serializable structure using direct property access
                     let mappedDocuments = documents.map { document in

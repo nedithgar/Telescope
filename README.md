@@ -10,6 +10,7 @@ Telescope is an MCP server that enables AI assistants like Claude Desktop and Cu
 
 - **Web Search Integration** - Search the web using natural language queries
 - **Cleaned Text Extraction** - Automatically removes ads, navigation, and other noise using ScrubberKit
+- **Result Re-Ranking (Default On)** - Intelligent heuristic + BM25 based URL re-ranking powered by ScrubberKit to prioritize higher quality, deduplicated sources (can be disabled with `--disable-rerank`)
 - **Configurable Results** - Control the number of search results (10-20 documents)
 - **MCP Compatible** - Works seamlessly with Claude Desktop, Cursor, and other MCP-compatible AI assistants
 - **Privacy-Focused** - Runs locally on your machine
@@ -100,6 +101,17 @@ The Telescope server requires no additional configuration. It uses ScrubberKit's
 - **Text Truncation**: Each document is limited to 20,000 characters to optimize token usage
 - **Thread Safety**: All operations are performed on the main thread as required by ScrubberKit
 - **ScrubberKit Setup**: Automatically configured on server startup via `ScrubberConfiguration.setup()`
+- **Re-Ranking**: Enabled by default. Pass `--disable-rerank` as a command line argument to the server binary to fall back to raw engine ordering.
+
+### Disabling Re-Ranking
+
+If you prefer the original search engine result ordering without heuristic merging and BM25 scoring, launch the server with:
+
+```bash
+./.build/release/telescope-server --disable-rerank
+```
+
+When disabled, the server logs: `Rerank disabled via --disable-rerank` on startup.
 
 ## 🛠️ MCP Tools Available
 
