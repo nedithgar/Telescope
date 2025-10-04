@@ -46,7 +46,10 @@ jobs:
           if [ "${{ github.event_name }}" = 'workflow_dispatch' ]; then
             RAW_TAG='${{ inputs.tag }}'
           else
-            RAW_TAG="v$((.github/scripts/extract-version.sh))"
+            SRC_VERSION=$(.github/scripts/extract-version.sh)
+            if [ -z "$SRC_VERSION" ]; then
+              echo '::error::Failed to extract version from source'; exit 1; fi
+            RAW_TAG="v$SRC_VERSION"
           fi
           VERSION=${RAW_TAG#v}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
@@ -54,6 +57,7 @@ jobs:
           if ! git rev-parse "$RAW_TAG" >/dev/null 2>&1; then
             echo "::error::Tag $RAW_TAG not found (expected it to be created by tag workflow)"; exit 1
           fi
+          echo "Derived version: $VERSION (tag: $RAW_TAG) from event: ${{ github.event_name }}"          
 
       - name: Skip if release already exists
         id: maybe_skip
