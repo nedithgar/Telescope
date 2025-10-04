@@ -1,10 +1,6 @@
-# Telescope MCP Server 🔭
-
-A Model Context Protocol (MCP) server that provides web search capabilities using [ScrubberKit](https://github.com/Lakr233/ScrubberKit) for cleaning and extracting text content from web pages.
-
 ## 🎯 What is Telescope?
 
-Telescope is an MCP server that enables AI assistants like Claude Desktop and Cursor to search the web and retrieve cleaned, readable text content from search results. It bridges the gap between AI assistants and web content, providing structured access to web information.
+Telescope is an MCP server that enables AI agents to search the web and retrieve cleaned, readable text content from search results. It bridges the gap between AI agents and web content, providing structured access to web information.
 
 ### Key Features
 
