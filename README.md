@@ -1,12 +1,13 @@
 ## 🎯 What is Telescope?
 
-Telescope is an MCP server that enables AI agents to search the web and retrieve cleaned, readable text content from search results. It bridges the gap between AI agents and web content, providing structured access to web information.
+Telescope is an MCP server that enables AI agents to search the web and retrieve cleaned, readable text content from search results without any search engine API keys, bridging the gap between AI agents and web content by providing structured access to web information straight from your local machine.
 
 ### Key Features
 
 - **Web Search Integration** - Search the web using natural language queries
 - **Cleaned Text Extraction** - Automatically removes ads, navigation, and other noise using ScrubberKit
 - **Result Re-Ranking (Default On)** - Intelligent heuristic + BM25 based URL re-ranking powered by ScrubberKit to prioritize higher quality, deduplicated sources (can be disabled with `--disable-rerank`)
+- **No API Keys Required** - Works out of the box; does NOT rely on Google/Bing/third‑party search API keys
 - **Configurable Results** - Control the number of search results (10-20 documents)
 - **MCP Compatible** - Works seamlessly with Claude Desktop, Cursor, and other MCP-compatible AI assistants
 - **Privacy-Focused** - Runs locally on your machine
@@ -90,6 +91,16 @@ swift test
 ## 🔧 Configuration
 
 The Telescope server requires no additional configuration. It uses ScrubberKit's built-in web search capabilities to fetch and clean web content.
+
+### No API Keys Needed
+
+Telescope performs discovery and retrieval directly via ScrubberKit's integrated search + extraction pipeline. You do not need to:
+
+- Create a Google Custom Search Engine
+- Supply Bing, SerpAPI, or other paid API credentials
+- Manage rate limits or billing for third-party search APIs
+
+Just build and run—Telescope will return cleaned textual excerpts from real web pages. (Normal network access from your machine is, of course, required.)
 
 ### Default Behavior
 
