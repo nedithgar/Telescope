@@ -45,27 +45,27 @@ struct TelescopeServerMain {
         let args = Array(CommandLine.arguments.dropFirst()) // skip executable name
 
         // Support basic help/version flags
-                if args.contains("-h") || args.contains("--help") {
-                        let help = """
-                        Usage: telescope-server [options]
+        if args.contains("-h") || args.contains("--help") {
+            let help = """
+            Usage: telescope-server [options]
 
-                        Options:
-                            --disable-rerank              Disable URL re-ranking (ScrubberKit heuristic + BM25)
-                            --rerank-keep-per-host=N      Limit results per host (default: 2, set large number to effectively disable)
-                            --version                     Print version and exit
-                            -h, --help                    Show this help and exit
+            Options:
+                --disable-rerank              Disable URL re-ranking (ScrubberKit heuristic + BM25)
+                --rerank-keep-per-host=N      Limit results per host (default: 2, set large number to effectively disable)
+                --version                     Print version and exit
+                -h, --help                    Show this help and exit
 
-                        Examples:
-                            telescope-server
-                            telescope-server --disable-rerank
-                            telescope-server --rerank-keep-per-host=3
-                        """
-                        .split(separator: "\n")
-                        .map { $0.trimmingCharacters(in: .whitespaces) }
-                        .joined(separator: "\n")
-                        print(help)
-                        exit(0)
-                }
+            Examples:
+                telescope-server
+                telescope-server --disable-rerank
+                telescope-server --rerank-keep-per-host=3
+            """
+            .split(separator: "\n")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .joined(separator: "\n")
+            print(help)
+            exit(0)
+        }
         if args.contains("--version") {
             print("telescope-server v\(version)")
             exit(0)

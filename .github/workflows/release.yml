@@ -66,10 +66,7 @@ jobs:
 
       - name: Verify tag matches source version
         run: |
-          src_line=$(grep -E 'let version = "[0-9]+\.[0-9]+\.[0-9]+"' Sources/TelescopeServer/main.swift || true)
-          if [ -z "$src_line" ]; then
-            echo '::error::Unable to locate version constant in Sources/TelescopeServer/main.swift'; exit 1; fi
-          src_ver=$(echo "$src_line" | sed -E 's/.*let version = "([0-9]+\.[0-9]+\.[0-9]+)".*/\1/')
+          src_ver=$(.github/scripts/extract-version.sh)
           if [ "$src_ver" != "${{ steps.vars.outputs.version }}" ]; then
             echo "::error::Tag version ${{ steps.vars.outputs.version }} does not match source version $src_ver"; exit 1; fi
           echo "Tag version matches source version: $src_ver"

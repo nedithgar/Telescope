@@ -19,16 +19,7 @@ jobs:
       - name: Extract version from source
         id: ver
         run: |
-          line=$(grep -E 'let version = "[0-9]+\.[0-9]+\.[0-9]+"' Sources/TelescopeServer/main.swift || true)
-          if [ -z "$line" ]; then
-            echo '::error::Could not find version declaration in Sources/TelescopeServer/main.swift'
-            exit 1
-          fi
-          VERSION=$(echo "$line" | sed -E 's/.*let version = "([0-9]+\.[0-9]+\.[0-9]+)".*/\1/')
-          if [ -z "$VERSION" ]; then
-            echo '::error::Failed to parse version from line: '"$line"
-            exit 1
-          fi
+          VERSION=$(.github/scripts/extract-version.sh)
           echo "Parsed version: $VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
