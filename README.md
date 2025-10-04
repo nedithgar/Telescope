@@ -18,16 +18,69 @@ Telescope is an MCP server that enables AI agents to search the web and retrieve
 
 ## 🚀 Quick Start
 
+You can either grab the prebuilt universal macOS binary from GitHub Releases (recommended) or build from source.
+
+### 1. Download the Latest Release Binary
+
+1. Go to: https://github.com/nedithgar/Telescope/releases/latest
+2. Download the asset: `telescope-server-macOS-universal`
+3. Download the matching checksum: `telescope-server-macOS-universal.sha256`
+4. Verify integrity:
+
+```bash
+shasum -a 256 -c telescope-server-macOS-universal.sha256
+```
+
+Expected output ends with `OK`.
+
+### 2. Make It Executable & (Optionally) Install
+
+```bash
+chmod +x telescope-server-macOS-universal
+mkdir -p ~/.local/bin
+mv telescope-server-macOS-universal ~/.local/bin/telescope-server
+```
+
+Ensure `~/.local/bin` is on your PATH (add to your shell profile if needed):
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+### 3. Add to an MCP-Compatible Client Configuration
+
+Example JSON snippet (e.g. for a settings file consumed by an MCP-aware client):
+
 ```json
 {
   "mcpServers": {
     "telescope": {
-      "command": "/path/to/Telescope/.build/release/telescope-server",
+      "command": "/Users/youruser/.local/bin/telescope-server",
       "args": []
     }
   }
 }
 ```
+
+Adjust the path if you didn't move the binary to `~/.local/bin`.
+
+### 5. Optional Runtime Flags
+
+Disable reranking (use raw ordering):
+
+```bash
+telescope-server --disable-rerank
+```
+
+Increase per-host result allowance:
+
+```bash
+telescope-server --rerank-keep-per-host=3
+```
+
+---
+
+If you prefer to build instead of downloading, see the next section.
 
 ## 🏗️ Building from Source
 
