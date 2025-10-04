@@ -1,0 +1,68 @@
+name: Tag on Version Change
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+jobs:
+  tag-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version from source
+        id: ver
+        run: |
+          VERSION=$(.github/scripts/extract-version.sh)
+          echo "Parsed version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Fetch tags
+        run: git fetch --tags --force
+
+      - name: Skip if tag already exists
+        id: tagcheck
+        run: |
+          if git rev-parse "v${{ steps.ver.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Tag v${{ steps.ver.outputs.version }} already exists. Skipping tag creation."
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Enforce monotonic version (>= latest)
+        if: steps.tagcheck.outputs.exists == 'false'
+        run: |
+          latest=$(git tag -l 'v*' --sort=-version:refname | head -n1 || true)
+          if [ -n "$latest" ]; then
+            latest_ver=${latest#v}
+            # Compare versions using sort -V
+            first=$(printf "%s\n%s\n" "$latest_ver" "${{ steps.ver.outputs.version }}" | sort -V | head -n1)
+            if [ "$first" != "$latest_ver" ]; then
+              echo "::error::New version ${{ steps.ver.outputs.version }} is lower than existing latest $latest_ver"; exit 1
+            fi
+          fi
+          echo "Version monotonicity check passed."
+
+      - name: Create & push tag
+        if: steps.tagcheck.outputs.exists == 'false'
+        run: |
+          git config user.name 'github-actions'
+          git config user.email 'actions@github.com'
+          git tag -a v${{ steps.ver.outputs.version }} -m "Release v${{ steps.ver.outputs.version }}"
+          git push origin v${{ steps.ver.outputs.version }}
+          echo "Tag v${{ steps.ver.outputs.version }} created and pushed."
+
+      - name: Summary
+        run: |
+          if [ '${{ steps.tagcheck.outputs.exists }}' = 'true' ]; then
+            echo "No new tag created." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Created tag v${{ steps.ver.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          fi

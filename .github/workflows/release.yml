@@ -1,0 +1,123 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing git tag to release (must start with v)' 
+        required: true
+      prerelease:
+        description: 'Mark as pre-release (true/false)'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: macos-15
+    env:
+      SWIFT_VERSION: '6.2'
+      PRODUCT_EXECUTABLE: 'telescope-server'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure tag format (dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          case "${{ inputs.tag }}" in 
+            v*) echo "Tag input OK";;
+            *) echo "::error::Tag must start with 'v' (e.g. v1.2.3)"; exit 1;;
+          esac
+
+      - name: Derive tag (manual dispatch)
+        id: tag
+        if: github.event_name == 'workflow_dispatch' && inputs.tag != ''
+        run: echo "tag=${{ inputs.tag }}" >> $GITHUB_OUTPUT
+
+      - name: Validate tag exists (manual dispatch only)
+        if: github.event_name == 'workflow_dispatch' && inputs.tag != ''
+        run: |
+          git fetch --tags --force
+          if git rev-parse "${{ inputs.tag }}" >/dev/null 2>&1; then
+            echo "Tag exists: ${{ inputs.tag }}"
+          else
+            echo "::error::Tag ${{ inputs.tag }} not found"; exit 1
+          fi
+
+      - name: Set VERSION variable
+        id: vars
+        run: |
+          if [ "${{ github.event_name }}" = 'push' ]; then
+            RAW_TAG="${GITHUB_REF##*/}"
+          else
+            RAW_TAG="${{ inputs.tag }}"
+          fi
+          VERSION=${RAW_TAG#v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "raw_tag=$RAW_TAG" >> $GITHUB_OUTPUT
+
+      - name: Verify tag matches source version
+        run: |
+          src_ver=$(.github/scripts/extract-version.sh)
+          if [ "$src_ver" != "${{ steps.vars.outputs.version }}" ]; then
+            echo "::error::Tag version ${{ steps.vars.outputs.version }} does not match source version $src_ver"; exit 1; fi
+          echo "Tag version matches source version: $src_ver"
+
+      - name: Cache Swift build
+        uses: actions/cache@v4
+        with:
+          path: .build
+          key: ${{ runner.os }}-swift-${{ env.SWIFT_VERSION }}-${{ hashFiles('Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-swift-${{ env.SWIFT_VERSION }}-
+
+      - name: Set up Swift ${{ env.SWIFT_VERSION }}
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: ${{ env.SWIFT_VERSION }}
+
+      - name: Build (release)
+        run: swift build -c release --arch arm64 --arch x86_64
+
+      - name: Run tests (arm64 only)
+        run: swift test -c release --arch arm64
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p artifacts
+          # Create a versioned universal binary filename: telescope-server-vX.Y.Z-macOS-universal
+          RAW_TAG='${{ steps.vars.outputs.raw_tag }}'
+          DEST=artifacts/${PRODUCT_EXECUTABLE}-${RAW_TAG}-macOS-universal
+          cp .build/apple/Products/Release/${PRODUCT_EXECUTABLE} "$DEST"
+          chmod +x "$DEST"
+          strip -x "$DEST" || true
+          shasum -a 256 "$DEST" > "$DEST.sha256"
+
+      - name: Upload artifacts (workflow)
+        uses: actions/upload-artifact@v4
+        with:
+          name: telescope-binaries-${{ steps.vars.outputs.version }}
+          path: artifacts/*
+          if-no-files-found: error
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Telescope v${{ steps.vars.outputs.version }}
+          tag_name: ${{ steps.vars.outputs.raw_tag }}
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease == 'true' }}
+          files: |
+            artifacts/${{ env.PRODUCT_EXECUTABLE }}-${{ steps.vars.outputs.raw_tag }}-macOS-universal
+            artifacts/${{ env.PRODUCT_EXECUTABLE }}-${{ steps.vars.outputs.raw_tag }}-macOS-universal.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -18,16 +18,71 @@ Telescope is an MCP server that enables AI agents to search the web and retrieve
 
 ## 🚀 Quick Start
 
+You can either grab the prebuilt universal macOS binary from GitHub Releases (recommended) or build from source.
+
+### 1. Download the Latest Release Binary
+
+1. Go to: https://github.com/nedithgar/Telescope/releases/latest
+2. Download the asset: `telescope-server-vX.Y.Z-macOS-universal` (example: `telescope-server-v0.1.0-macOS-universal`)
+3. Download the matching checksum: `telescope-server-vX.Y.Z-macOS-universal.sha256`
+4. Verify integrity (substitute the actual version):
+
+```bash
+shasum -a 256 -c telescope-server-v0.1.0-macOS-universal.sha256
+```
+
+Expected output ends with `OK`.
+
+### 2. Make It Executable & Install (macOS)
+
+Install system‑wide (recommended for macOS). This places the binary where it’s already on your PATH.
+
+```bash
+chmod +x telescope-server-v0.1.0-macOS-universal
+sudo mv telescope-server-v0.1.0-macOS-universal /usr/local/bin/telescope-server
+```
+
+Verify it runs:
+
+```bash
+telescope-server --help || echo "Install check failed"
+```
+
+
+### 3. Add to an MCP-Compatible Client Configuration
+
+Example JSON snippet (macOS install via `/usr/local/bin`):
+
 ```json
 {
   "mcpServers": {
     "telescope": {
-      "command": "/path/to/Telescope/.build/release/telescope-server",
+      "command": "/usr/local/bin/telescope-server",
       "args": []
     }
   }
 }
 ```
+
+If you used a custom location (e.g. `~/bin/telescope-server`), update the `command` accordingly.
+
+### 4. Optional Runtime Flags
+
+Disable reranking (use raw ordering):
+
+```bash
+telescope-server --disable-rerank
+```
+
+Increase per-host result allowance:
+
+```bash
+telescope-server --rerank-keep-per-host=3
+```
+
+---
+
+If you prefer to build instead of downloading, see the next section.
 
 ## 🏗️ Building from Source
 
