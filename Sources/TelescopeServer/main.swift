@@ -39,23 +39,54 @@ struct TelescopeServerMain {
             return handler
         }
         let logger = Logger(label: "dev.telescope.server")
+        let version = "0.0.2"
 
+        // Parse CLI arguments early
+        let args = Array(CommandLine.arguments.dropFirst()) // skip executable name
+
+        // Support basic help/version flags
+                if args.contains("-h") || args.contains("--help") {
+                        let help = """
+                        Usage: telescope-server [options]
+
+                        Options:
+                            --disable-rerank              Disable URL re-ranking (ScrubberKit heuristic + BM25)
+                            --rerank-keep-per-host=N      Limit results per host (default: 2, set large number to effectively disable)
+                            --version                     Print version and exit
+                            -h, --help                    Show this help and exit
+
+                        Examples:
+                            telescope-server
+                            telescope-server --disable-rerank
+                            telescope-server --rerank-keep-per-host=3
+                        """
+                        .split(separator: "\n")
+                        .map { $0.trimmingCharacters(in: .whitespaces) }
+                        .joined(separator: "\n")
+                        print(help)
+                        exit(0)
+                }
+        if args.contains("--version") {
+            print("telescope-server v\(version)")
+            exit(0)
+        }
+
+        // Create server instance
         let server = Server(
             name: "TelescopeServer",
-            version: "0.0.2",
+            version: version,
             capabilities: .init(
                 prompts: .init(listChanged: false),
                 resources: .init(subscribe: false, listChanged: false),
                 tools: .init(listChanged: true)
             )
         )
-        
-        // CLI flag support: --disable-rerank to turn off ScrubberKit URL re-ranking
-        let arguments = CommandLine.arguments.dropFirst() // skip executable name
-        let disableRerank = arguments.contains("--disable-rerank")
+
+        // Feature flags and tuning
+        let disableRerank = args.contains("--disable-rerank")
         var rerankKeepPerHost: Int? = 2 // balanced profile default
-        if let keepFlagIndex = arguments.firstIndex(where: { $0.hasPrefix("--rerank-keep-per-host=") }) {
-            let valuePart = arguments[keepFlagIndex].split(separator: "=", maxSplits: 1).last.map(String.init)
+        if let keepFlagIndex = args.firstIndex(where: { $0.hasPrefix("--rerank-keep-per-host=") }) {
+            let valuePart = args[keepFlagIndex].split(separator: "=", maxSplits: 1).last.map(String.init)
             if let valuePart, let intVal = Int(valuePart), intVal > 0 { rerankKeepPerHost = intVal }
             else { logger.warning("Ignored invalid --rerank-keep-per-host value; using default 2") }
         }
