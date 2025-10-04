@@ -23,12 +23,12 @@ You can either grab the prebuilt universal macOS binary from GitHub Releases (re
 ### 1. Download the Latest Release Binary
 
 1. Go to: https://github.com/nedithgar/Telescope/releases/latest
-2. Download the asset: `telescope-server-macOS-universal`
-3. Download the matching checksum: `telescope-server-macOS-universal.sha256`
-4. Verify integrity:
+2. Download the asset: `telescope-server-vX.Y.Z-macOS-universal` (example: `telescope-server-v0.1.0-macOS-universal`)
+3. Download the matching checksum: `telescope-server-vX.Y.Z-macOS-universal.sha256`
+4. Verify integrity (substitute the actual version):
 
 ```bash
-shasum -a 256 -c telescope-server-macOS-universal.sha256
+shasum -a 256 -c telescope-server-v0.1.0-macOS-universal.sha256
 ```
 
 Expected output ends with `OK`.
@@ -36,9 +36,9 @@ Expected output ends with `OK`.
 ### 2. Make It Executable & (Optionally) Install
 
 ```bash
-chmod +x telescope-server-macOS-universal
+chmod +x telescope-server-v0.1.0-macOS-universal
 mkdir -p ~/.local/bin
-mv telescope-server-macOS-universal ~/.local/bin/telescope-server
+mv telescope-server-v0.1.0-macOS-universal ~/.local/bin/telescope-server
 ```
 
 Ensure `~/.local/bin` is on your PATH (add to your shell profile if needed):

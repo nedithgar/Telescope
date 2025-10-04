@@ -86,8 +86,9 @@ jobs:
       - name: Collect artifacts
         run: |
           mkdir -p artifacts
-          # Create a universal binary file name that is explicit
-          DEST=artifacts/${PRODUCT_EXECUTABLE}-macOS-universal
+          # Create a versioned universal binary filename: telescope-server-vX.Y.Z-macOS-universal
+          RAW_TAG='${{ steps.vars.outputs.raw_tag }}'
+          DEST=artifacts/${PRODUCT_EXECUTABLE}-${RAW_TAG}-macOS-universal
           cp .build/apple/Products/Release/${PRODUCT_EXECUTABLE} "$DEST"
           chmod +x "$DEST"
           strip -x "$DEST" || true
@@ -109,7 +110,7 @@ jobs:
           draft: false
           prerelease: ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease == 'true' }}
           files: |
-            artifacts/${{ env.PRODUCT_EXECUTABLE }}-macOS-universal
-            artifacts/${{ env.PRODUCT_EXECUTABLE }}-macOS-universal.sha256
+            artifacts/${{ env.PRODUCT_EXECUTABLE }}-${{ steps.vars.outputs.raw_tag }}-macOS-universal
+            artifacts/${{ env.PRODUCT_EXECUTABLE }}-${{ steps.vars.outputs.raw_tag }}-macOS-universal.sha256
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
