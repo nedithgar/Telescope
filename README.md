@@ -33,38 +33,40 @@ shasum -a 256 -c telescope-server-v0.1.0-macOS-universal.sha256
 
 Expected output ends with `OK`.
 
-### 2. Make It Executable & (Optionally) Install
+### 2. Make It Executable & Install (macOS)
+
+Install system‑wide (recommended for macOS). This places the binary where it’s already on your PATH.
 
 ```bash
 chmod +x telescope-server-v0.1.0-macOS-universal
-mkdir -p ~/.local/bin
-mv telescope-server-v0.1.0-macOS-universal ~/.local/bin/telescope-server
+sudo mv telescope-server-v0.1.0-macOS-universal /usr/local/bin/telescope-server
 ```
 
-Ensure `~/.local/bin` is on your PATH (add to your shell profile if needed):
+Verify it runs:
 
 ```bash
-export PATH="$HOME/.local/bin:$PATH"
+telescope-server --help || echo "Install check failed"
 ```
+
 
 ### 3. Add to an MCP-Compatible Client Configuration
 
-Example JSON snippet (e.g. for a settings file consumed by an MCP-aware client):
+Example JSON snippet (macOS install via `/usr/local/bin`):
 
 ```json
 {
   "mcpServers": {
     "telescope": {
-      "command": "/Users/youruser/.local/bin/telescope-server",
+      "command": "/usr/local/bin/telescope-server",
       "args": []
     }
   }
 }
 ```
 
-Adjust the path if you didn't move the binary to `~/.local/bin`.
+If you used a custom location (e.g. `~/bin/telescope-server`), update the `command` accordingly.
 
-### 5. Optional Runtime Flags
+### 4. Optional Runtime Flags
 
 Disable reranking (use raw ordering):
 
