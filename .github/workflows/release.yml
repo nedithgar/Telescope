@@ -1,18 +1,18 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Existing git tag to release (must start with v)' 
+        description: 'Existing git tag to release (must start with v)'
         required: true
       prerelease:
         description: 'Mark as pre-release (true/false)'
         required: false
         default: 'false'
+  workflow_run:
+    workflows: ["Tag on Version Change"]
+    types: [completed]
 
 permissions:
   contents: write
@@ -29,47 +29,54 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Ensure tag format (dispatch)
+      - name: Fetch tags
+        run: git fetch --tags --force
+
+      - name: Validate manual dispatch tag format
         if: github.event_name == 'workflow_dispatch'
         run: |
-          case "${{ inputs.tag }}" in 
+          case "${{ inputs.tag }}" in
             v*) echo "Tag input OK";;
             *) echo "::error::Tag must start with 'v' (e.g. v1.2.3)"; exit 1;;
           esac
 
-      - name: Derive tag (manual dispatch)
-        id: tag
-        if: github.event_name == 'workflow_dispatch' && inputs.tag != ''
-        run: echo "tag=${{ inputs.tag }}" >> $GITHUB_OUTPUT
-
-      - name: Validate tag exists (manual dispatch only)
-        if: github.event_name == 'workflow_dispatch' && inputs.tag != ''
-        run: |
-          git fetch --tags --force
-          if git rev-parse "${{ inputs.tag }}" >/dev/null 2>&1; then
-            echo "Tag exists: ${{ inputs.tag }}"
-          else
-            echo "::error::Tag ${{ inputs.tag }} not found"; exit 1
-          fi
-
       - name: Set VERSION variable
         id: vars
         run: |
-          if [ "${{ github.event_name }}" = 'push' ]; then
-            RAW_TAG="${GITHUB_REF##*/}"
+          if [ "${{ github.event_name }}" = 'workflow_dispatch' ]; then
+            RAW_TAG='${{ inputs.tag }}'
           else
-            RAW_TAG="${{ inputs.tag }}"
+            RAW_TAG="v$((.github/scripts/extract-version.sh))"
           fi
           VERSION=${RAW_TAG#v}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "raw_tag=$RAW_TAG" >> $GITHUB_OUTPUT
+          if ! git rev-parse "$RAW_TAG" >/dev/null 2>&1; then
+            echo "::error::Tag $RAW_TAG not found (expected it to be created by tag workflow)"; exit 1
+          fi
+
+      - name: Skip if release already exists
+        id: maybe_skip
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ steps.vars.outputs.raw_tag }}")
+            if [ "$code" = "200" ]; then
+              echo "Release for ${{ steps.vars.outputs.raw_tag }} already exists. Skipping build." | tee -a $GITHUB_STEP_SUMMARY
+              echo "skip=true" >> $GITHUB_OUTPUT
+            else
+              echo "skip=false" >> $GITHUB_OUTPUT
+            fi
+
+      - name: Stop early (release exists)
+        if: steps.maybe_skip.outputs.skip == 'true'
+        run: echo "Exiting early because release already exists." && exit 0
 
       - name: Verify tag matches source version
+        if: steps.maybe_skip.outputs.skip != 'true'
         run: |
           src_ver=$(.github/scripts/extract-version.sh)
           if [ "$src_ver" != "${{ steps.vars.outputs.version }}" ]; then
             echo "::error::Tag version ${{ steps.vars.outputs.version }} does not match source version $src_ver"; exit 1; fi
-          echo "Tag version matches source version: $src_ver"
+            echo "Tag version matches source version: $src_ver"
 
       - name: Cache Swift build
         uses: actions/cache@v4
@@ -85,15 +92,17 @@ jobs:
           swift-version: ${{ env.SWIFT_VERSION }}
 
       - name: Build (release)
+        if: steps.maybe_skip.outputs.skip != 'true'
         run: swift build -c release --arch arm64 --arch x86_64
 
       - name: Run tests (arm64 only)
+        if: steps.maybe_skip.outputs.skip != 'true'
         run: swift test -c release --arch arm64
 
       - name: Collect artifacts
+        if: steps.maybe_skip.outputs.skip != 'true'
         run: |
           mkdir -p artifacts
-          # Create a versioned universal binary filename: telescope-server-vX.Y.Z-macOS-universal
           RAW_TAG='${{ steps.vars.outputs.raw_tag }}'
           DEST=artifacts/${PRODUCT_EXECUTABLE}-${RAW_TAG}-macOS-universal
           cp .build/apple/Products/Release/${PRODUCT_EXECUTABLE} "$DEST"
@@ -102,6 +111,7 @@ jobs:
           shasum -a 256 "$DEST" > "$DEST.sha256"
 
       - name: Upload artifacts (workflow)
+        if: steps.maybe_skip.outputs.skip != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: telescope-binaries-${{ steps.vars.outputs.version }}
@@ -109,6 +119,7 @@ jobs:
           if-no-files-found: error
 
       - name: Create GitHub Release
+        if: steps.maybe_skip.outputs.skip != 'true'
         uses: softprops/action-gh-release@v2
         with:
           name: Telescope v${{ steps.vars.outputs.version }}
