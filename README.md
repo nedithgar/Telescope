@@ -1,5 +1,9 @@
 ## 🎯 What is Telescope?
 
+> ⚠️ Project Status: **Under Active Construction**
+>
+> This codebase (and especially this README) is still evolving. Interfaces, flags, and output formats may change without notice while the core architecture stabilizes. Expect rapid iterations, rough edges, and incomplete docs for a little while longer. If you try it and something breaks or feels confusing, please open an issue – that feedback is extremely helpful right now.
+
 Telescope is an MCP server that enables AI agents to search the web and retrieve cleaned, readable text content from search results without any search engine API keys, bridging the gap between AI agents and web content by providing structured access to web information straight from your local machine.
 
 ### Key Features
@@ -9,7 +13,7 @@ Telescope is an MCP server that enables AI agents to search the web and retrieve
 - **Result Re-Ranking (Default On)** - Intelligent heuristic + BM25 based URL re-ranking powered by ScrubberKit to prioritize higher quality, deduplicated sources (can be disabled with `--disable-rerank`)
 - **No API Keys Required** - Works out of the box; does NOT rely on Google/Bing/third‑party search API keys
 - **Configurable Results** - Control the number of search results (10-20 documents)
-- **MCP Compatible** - Works seamlessly with Claude Desktop, Cursor, and other MCP-compatible AI assistants
+- **MCP Compatible** - Works seamlessly with Claude Desktop, Cursor, and other MCP-compatible AI agents
 - **Privacy-Focused** - Runs locally on your machine
 
 ## 🚀 Quick Start
@@ -106,8 +110,7 @@ Just build and run—Telescope will return cleaned textual excerpts from real we
 
 - **Result Limit**: 10-20 documents per search (configurable per request, clamped to this range)
 - **Text Truncation**: Each document is limited to 20,000 characters to optimize token usage
-- **Thread Safety**: All operations are performed on the main thread as required by ScrubberKit
-- **ScrubberKit Setup**: Automatically configured on server startup via `ScrubberConfiguration.setup()`
+- **Thread Safety**: All operations are performed on the main thread
 - **Re-Ranking**: Enabled by default. Pass `--disable-rerank` as a command line argument to the server binary to fall back to raw engine ordering.
 
 ### Disabling Re-Ranking
@@ -140,28 +143,6 @@ Search the web for a query and return cleaned textual page excerpts.
 - `query` (required): The search query keywords
 - `limit` (optional): Maximum number of documents to return (default: 10, max: 20)
 
-**Example Usage in Claude:**
-
-```
-Search the web for "Swift MCP server tutorial"
-Find information about "best practices for web scraping"
-```
-
-**Returns:**
-```
-Search results for: [your query]
-
-# Result 1: [Page Title]
-URL: [page URL]
-
-[Cleaned text content...]
-
-# Result 2: [Page Title]
-URL: [page URL]
-
-[Cleaned text content...]
-```
-
 ## 📚 Architecture
 
 Telescope uses a modern service-based architecture:
@@ -170,20 +151,10 @@ Telescope uses a modern service-based architecture:
   - `SearchDocument` - Lightweight, Sendable document structure for serialization
   - `search(query:limit:)` - Async search method that runs ScrubberKit on main thread
   - `formatResults(query:documents:)` - Formats search results as readable text
-- **TelescopeServer** (Executable) - MCP server that exposes the Telescope service to AI assistants
-  - Version: 0.0.1
+- **TelescopeServer** (Executable) - MCP server that exposes the Telescope service to AI agents
   - Handles `ListTools` and `CallTool` MCP methods
   - Uses `StdioTransport` for communication
 - **ServiceLifecycle** - Manages the server lifecycle with graceful shutdown (SIGINT/SIGTERM)
-
-### How It Works
-
-1. **Server Initialization** - `ScrubberConfiguration.setup()` is called on startup
-2. **Client Connection** - AI assistant connects to the MCP server via stdio
-3. **Tool Discovery** - Server advertises the `searchweb` tool via `ListTools` handler
-4. **Query Execution** - Assistant sends search queries through `CallTool` handler
-5. **Content Retrieval** - `TelescopeSearchService` uses ScrubberKit on main thread to fetch and clean web content
-6. **Results Delivery** - Cleaned text (up to 20,000 chars per document) is formatted and returned to the assistant
 
 ## 🧪 Testing
 
@@ -207,28 +178,7 @@ Use the MCP Inspector to test the server:
 npx @modelcontextprotocol/inspector /path/to/Telescope/.build/release/telescope-server
 ```
 
-## 📋 Requirements
-
-### System Requirements
-
-- macOS 16.0+ (as specified in Package.swift with `.macOS(.v26)`)
-- Swift 6.2+
-- Xcode 16.4+ (for building)
-
-### Dependencies
-
-- [ScrubberKit](https://github.com/Lakr233/ScrubberKit) (0.1.0+) - Web content extraction and cleaning
-- [Swift MCP SDK](https://github.com/modelcontextprotocol/swift-sdk) (0.10.0+) - Model Context Protocol implementation
-- [Swift Service Lifecycle](https://github.com/swift-server/swift-service-lifecycle) (2.3.0+) - Service management
-
 ## 🐛 Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| `Command not found` | Ensure the binary path in your MCP config is correct |
-| `Build failed` | Check that you have Xcode 16.4+ and Swift 6.2+ installed |
-| `Server not responding` | Check the MCP client logs for connection errors |
-| `Search results empty` | Verify you have an active internet connection |
 
 ### Debug Logging
 
@@ -266,7 +216,3 @@ This project is licensed under the GNU Affero General Public License v3.0 (AGPL-
 ## 👤 Author
 
 Created by [@nedithgar](https://github.com/nedithgar)
-
----
-
-Made with 🔭 for the MCP ecosystem
