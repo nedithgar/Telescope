@@ -1,4 +1,4 @@
-## 🎯 What is Telescope?
+## 🔭 What is Telescope?
 
 > ⚠️ Project Status: **Under Active Construction**
 >
