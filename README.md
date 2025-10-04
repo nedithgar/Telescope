@@ -158,18 +158,6 @@ Telescope uses a modern service-based architecture:
 
 ## 🧪 Testing
 
-### Running Tests
-
-```bash
-# Run all tests
-swift test
-
-# Run with verbose output
-swift test --verbose
-```
-
-**Note:** The test suite currently contains a minimal example test. Additional integration tests are recommended for production use.
-
 ### Testing the MCP Server
 
 Use the MCP Inspector to test the server:
@@ -198,11 +186,13 @@ The logger is initialized with label `"dev.telescope.server"` and logs client co
 
 Contributions are welcome! Please:
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+1. Fork the repository (or create a new branch if you have push access)
+2. Create a descriptive branch: `git checkout -b feature/<short-name>` or `bugfix/<issue-id>`
+3. Make your changes (add/update tests and docs where it helps)
+4. Run the test suite locally: `swift test`
+5. Commit with a clear message: `git commit -m "feat: concise summary"`
+6. Push your branch: `git push origin <branch-name>`
+7. Open a Pull Request describing the motivation, changes, and any notes for reviewers
 
 ## 📝 License
 
