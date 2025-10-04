@@ -18,35 +18,6 @@ Telescope is an MCP server that enables AI agents to search the web and retrieve
 
 ## 🚀 Quick Start
 
-### For Claude Desktop
-
-1. Build the Telescope server:
-   ```bash
-   swift build -c release
-   ```
-
-2. Open Claude Desktop Settings (from the **menubar**, not the in-app settings)
-
-3. Navigate to Developer → Edit Config
-
-4. Add the Telescope MCP server configuration:
-   ```json
-   {
-     "mcpServers": {
-       "telescope": {
-         "command": "/path/to/Telescope/.build/release/telescope-server",
-         "args": []
-       }
-     }
-   }
-   ```
-
-5. Save and restart Claude Desktop
-
-### For Cursor IDE
-
-Add to your Cursor settings:
-
 ```json
 {
   "mcpServers": {
