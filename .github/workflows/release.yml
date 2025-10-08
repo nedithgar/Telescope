@@ -59,16 +59,26 @@ jobs:
           fi
           echo "Derived version: $VERSION (tag: $RAW_TAG) from event: ${{ github.event_name }}"          
 
-      - name: Skip if release already exists
+      - name: Skip if release already exists with assets
         id: maybe_skip
         run: |
-          code=$(curl -s -o /dev/null -w "%{http_code}" "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ steps.vars.outputs.raw_tag }}")
-            if [ "$code" = "200" ]; then
-              echo "Release for ${{ steps.vars.outputs.raw_tag }} already exists. Skipping build." | tee -a $GITHUB_STEP_SUMMARY
+          response=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ steps.vars.outputs.raw_tag }}")
+          
+          if echo "$response" | jq -e '.id' >/dev/null 2>&1; then
+            # Release exists, check if it has assets
+            asset_count=$(echo "$response" | jq '.assets | length')
+            if [ "$asset_count" -gt 0 ]; then
+              echo "✅ Release for ${{ steps.vars.outputs.raw_tag }} already exists with $asset_count asset(s). Skipping build." | tee -a $GITHUB_STEP_SUMMARY
               echo "skip=true" >> $GITHUB_OUTPUT
             else
+              echo "⚠️ Release for ${{ steps.vars.outputs.raw_tag }} exists but has no assets. Will build and upload." | tee -a $GITHUB_STEP_SUMMARY
               echo "skip=false" >> $GITHUB_OUTPUT
             fi
+          else
+            echo "📦 Release for ${{ steps.vars.outputs.raw_tag }} does not exist. Will create it." | tee -a $GITHUB_STEP_SUMMARY
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Stop early (release exists)
         if: steps.maybe_skip.outputs.skip == 'true'
