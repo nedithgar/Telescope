@@ -89,19 +89,40 @@ jobs:
           key: ${{ runner.os }}-swift-${{ env.SWIFT_VERSION }}-${{ hashFiles('Package.resolved') }}
           restore-keys: |
             ${{ runner.os }}-swift-${{ env.SWIFT_VERSION }}-
-
-      - name: Set up Swift ${{ env.SWIFT_VERSION }}
-        uses: swift-actions/setup-swift@v2
+      - name: Cache Swiftly toolchains
+        uses: actions/cache@v4
         with:
-          swift-version: ${{ env.SWIFT_VERSION }}
+          path: ~/.swiftly/toolchains
+          key: ${{ runner.os }}-swiftly-${{ env.SWIFT_VERSION }}
+          restore-keys: |
+            ${{ runner.os }}-swiftly-
+
+      - name: Install Swiftly and Swift ${{ env.SWIFT_VERSION }}
+        run: |
+          set -euxo pipefail
+          # Install Swiftly (idempotent across cache restores)
+          if [ ! -x "$HOME/.swiftly/bin/swiftly" ]; then
+            curl -sS -O https://download.swift.org/swiftly/darwin/swiftly.pkg
+            installer -pkg swiftly.pkg -target CurrentUserHomeDirectory
+            ~/.swiftly/bin/swiftly init --quiet-shell-followup
+          fi
+          . "${SWIFTLY_HOME_DIR:-$HOME/.swiftly}/env.sh"
+          # Install / select toolchain
+          swiftly install "${SWIFT_VERSION}"
+          swiftly use "${SWIFT_VERSION}"
+          swift --version
 
       - name: Build (release)
         if: steps.maybe_skip.outputs.skip != 'true'
-        run: swift build -c release --arch arm64 --arch x86_64
+        run: |
+          . "${SWIFTLY_HOME_DIR:-$HOME/.swiftly}/env.sh"
+          swift build -c release --arch arm64 --arch x86_64
 
       - name: Run tests (arm64 only)
         if: steps.maybe_skip.outputs.skip != 'true'
-        run: swift test -c release --arch arm64
+        run: |
+          . "${SWIFTLY_HOME_DIR:-$HOME/.swiftly}/env.sh"
+          swift test -c release --arch arm64
 
       - name: Collect artifacts
         if: steps.maybe_skip.outputs.skip != 'true'
