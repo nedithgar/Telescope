@@ -1,9 +1,5 @@
 ## 🔭 What is Telescope?
 
-> ⚠️ Project Status: **Under Active Construction**
->
-> This codebase (and especially this README) is still evolving. Interfaces, flags, and output formats may change without notice while the core architecture stabilizes. Expect rapid iterations, rough edges, and incomplete docs for a little while longer. If you try it and something breaks or feels confusing, please open an issue – that feedback is extremely helpful right now.
-
 Telescope is an MCP server that enables AI agents to search the web and retrieve cleaned, readable text content from search results without any search engine API keys, bridging the gap between AI agents and web content by providing structured access to web information straight from your local machine.
 
 ### Key Features

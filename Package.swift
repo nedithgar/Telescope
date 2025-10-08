@@ -37,6 +37,8 @@ let package = Package(
                 .product(name: "ServiceLifecycle", package: "swift-service-lifecycle")
             ],
             swiftSettings: [
+                // Required for @main attribute in executables to avoid "top-level code" error
+                // This tells Swift to treat main.swift as a library module when using @main
                 .unsafeFlags(["-parse-as-library"])
             ]
         ),
