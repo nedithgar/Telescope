@@ -35,6 +35,9 @@ let package = Package(
             dependencies: [
                 "Telescope",
                 .product(name: "ServiceLifecycle", package: "swift-service-lifecycle")
+            ],
+            swiftSettings: [
+                .unsafeFlags(["-parse-as-library"])
             ]
         ),
         .testTarget(
