@@ -98,6 +98,11 @@ jobs:
             ${{ runner.os }}-swiftly-
 
       - name: Install Swiftly and Swift ${{ env.SWIFT_VERSION }}
+        # TEMPORARY: Using Swiftly instead of swift-actions/setup-swift because the
+        # action did not yet expose Swift ${SWIFT_VERSION} ("Version not available" error).
+        # Once swift-actions/setup-swift@v2 (or v3) supports this version reliably,
+        # we can revert to the official action for simpler caching & provenance.
+        # Ref: https://github.com/swift-actions/setup-swift
         run: |
           set -euxo pipefail
           # Install Swiftly (idempotent across cache restores)
