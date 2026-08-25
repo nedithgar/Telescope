@@ -1,5 +1,5 @@
 {
-  "originHash" : "2b9d2a8387b92fa23b1cd70c7fc934ff6078969878190dd0c9a27cea37af16e8",
+  "originHash" : "7968d51ab7f6ff559128f3ac19f3dfded9daffbe10c4d76011e6930c133aea73",
   "pins" : [
     {
       "identity" : "eventsource",
@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Lakr233/ScrubberKit.git",
       "state" : {
-        "revision" : "9db765d4ce66c8eb6778472903c3e8d041349527",
-        "version" : "0.1.0"
+        "revision" : "a2c801853e2772c76a17210a4d8fb4f6b55af5e1",
+        "version" : "0.1.1"
       }
     },
     {
