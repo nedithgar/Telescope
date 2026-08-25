@@ -18,9 +18,12 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/Lakr233/ScrubberKit.git", from: "0.1.0"),
-        .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", from: "0.10.0"),
-        .package(url: "https://github.com/swift-server/swift-service-lifecycle.git", from: "2.3.0")
+        .package(
+            url: "https://github.com/Lakr233/ScrubberKit.git",
+            revision: "4c0e55c2a257ceecae8f86c4781cfd99a6572347"
+        ),
+        .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", exact: "0.12.1"),
+        .package(url: "https://github.com/swift-server/swift-service-lifecycle.git", exact: "2.12.0")
     ],
     targets: [
         .target(
@@ -42,9 +45,22 @@ let package = Package(
                 .unsafeFlags(["-parse-as-library"])
             ]
         ),
+        .executableTarget(
+            name: "TelescopeStdoutProbe",
+            dependencies: [
+                .product(name: "ScrubberKit", package: "ScrubberKit")
+            ],
+            path: "Tests/TelescopeStdoutProbe",
+            swiftSettings: [
+                .unsafeFlags(["-parse-as-library"])
+            ]
+        ),
         .testTarget(
             name: "TelescopeTests",
-            dependencies: ["Telescope"]
+            dependencies: [
+                "Telescope",
+                "TelescopeStdoutProbe"
+            ]
         ),
     ]
 )

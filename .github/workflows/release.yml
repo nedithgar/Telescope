@@ -142,13 +142,34 @@ jobs:
       - name: Collect artifacts
         if: steps.maybe_skip.outputs.skip != 'true'
         run: |
-          mkdir -p artifacts
+          set -euo pipefail
           RAW_TAG='${{ steps.vars.outputs.raw_tag }}'
-          DEST=artifacts/${PRODUCT_EXECUTABLE}-${RAW_TAG}-macOS-universal
-          cp .build/apple/Products/Release/${PRODUCT_EXECUTABLE} "$DEST"
-          chmod +x "$DEST"
-          strip -x "$DEST" || true
-          shasum -a 256 "$DEST" > "$DEST.sha256"
+          BUILD_PRODUCTS='.build/apple/Products/Release'
+          RESOURCE_BUNDLE='ScrubberKit_ScrubberKit.bundle'
+          ARCHIVE_BASENAME="${PRODUCT_EXECUTABLE}-${RAW_TAG}-macOS-universal"
+          ARCHIVE_PATH="artifacts/${ARCHIVE_BASENAME}.zip"
+          STAGING_ROOT=$(mktemp -d)
+          PACKAGE_DIR="${STAGING_ROOT}/${ARCHIVE_BASENAME}"
+          trap 'rm -r "$STAGING_ROOT"' EXIT
+
+          mkdir -p artifacts "$PACKAGE_DIR"
+          cp "${BUILD_PRODUCTS}/${PRODUCT_EXECUTABLE}" "${PACKAGE_DIR}/${PRODUCT_EXECUTABLE}"
+          ditto "${BUILD_PRODUCTS}/${RESOURCE_BUNDLE}" "${PACKAGE_DIR}/${RESOURCE_BUNDLE}"
+          chmod +x "${PACKAGE_DIR}/${PRODUCT_EXECUTABLE}"
+          strip -x "${PACKAGE_DIR}/${PRODUCT_EXECUTABLE}" || true
+
+          test -f "${PACKAGE_DIR}/${RESOURCE_BUNDLE}/Contents/Resources/turndown.js"
+          test -f "${PACKAGE_DIR}/${RESOURCE_BUNDLE}/Contents/Resources/turndown-webkit-lite.js"
+
+          ditto -c -k --sequesterRsrc --keepParent "$PACKAGE_DIR" "$ARCHIVE_PATH"
+          unzip -tq "$ARCHIVE_PATH"
+          unzip -Z1 "$ARCHIVE_PATH" | grep -Fxq \
+            "${ARCHIVE_BASENAME}/${RESOURCE_BUNDLE}/Contents/Resources/turndown.js"
+
+          (
+            cd artifacts
+            shasum -a 256 "${ARCHIVE_BASENAME}.zip" > "${ARCHIVE_BASENAME}.zip.sha256"
+          )
 
       - name: Upload artifacts (workflow)
         if: steps.maybe_skip.outputs.skip != 'true'
@@ -168,7 +189,7 @@ jobs:
           draft: false
           prerelease: ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease == 'true' }}
           files: |
-            artifacts/${{ env.PRODUCT_EXECUTABLE }}-${{ steps.vars.outputs.raw_tag }}-macOS-universal
-            artifacts/${{ env.PRODUCT_EXECUTABLE }}-${{ steps.vars.outputs.raw_tag }}-macOS-universal.sha256
+            artifacts/${{ env.PRODUCT_EXECUTABLE }}-${{ steps.vars.outputs.raw_tag }}-macOS-universal.zip
+            artifacts/${{ env.PRODUCT_EXECUTABLE }}-${{ steps.vars.outputs.raw_tag }}-macOS-universal.zip.sha256
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

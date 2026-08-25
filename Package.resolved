@@ -1,5 +1,5 @@
 {
-  "originHash" : "f43e6b7fb6ebdfffff7e980ec6010d1f0f14ffa1d0de0a18495946065bd1653a",
+  "originHash" : "45e6cc158f87474db724e8de53dda934df5727279ac4d4a1b014150dafc8e8dd",
   "pins" : [
     {
       "identity" : "eventsource",
@@ -11,21 +11,11 @@
       }
     },
     {
-      "identity" : "lrucache",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/nicklockwood/LRUCache.git",
-      "state" : {
-        "revision" : "e0e9e039b33db8f2ef39b8e25607e38f46b13584",
-        "version" : "1.1.2"
-      }
-    },
-    {
       "identity" : "scrubberkit",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Lakr233/ScrubberKit.git",
       "state" : {
-        "revision" : "9db765d4ce66c8eb6778472903c3e8d041349527",
-        "version" : "0.1.0"
+        "revision" : "4c0e55c2a257ceecae8f86c4781cfd99a6572347"
       }
     },
     {
@@ -33,8 +23,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-async-algorithms.git",
       "state" : {
-        "revision" : "042e1c4d9d19748c9c228f8d4ebc97bb1e339b0b",
-        "version" : "1.0.4"
+        "revision" : "9d349bcc328ac3c31ce40e746b5882742a0d1272",
+        "version" : "1.1.3"
       }
     },
     {
@@ -60,8 +50,17 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-log.git",
       "state" : {
-        "revision" : "ce592ae52f982c847a4efc0dd881cc9eb32d29f2",
-        "version" : "1.6.4"
+        "revision" : "3ffafb9722d5d918c614feb496c8789a3b59d222",
+        "version" : "1.15.0"
+      }
+    },
+    {
+      "identity" : "swift-nio",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-nio.git",
+      "state" : {
+        "revision" : "0b18836bd8b0162e7e17a995a3fbee20ed8f3b2b",
+        "version" : "2.101.3"
       }
     },
     {
@@ -69,8 +68,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/modelcontextprotocol/swift-sdk.git",
       "state" : {
-        "revision" : "c0407a0b52677cb395d824cac2879b963075ba8c",
-        "version" : "0.10.2"
+        "revision" : "a0ae212ebf6eab5f754c3129608bc5557637e605",
+        "version" : "0.12.1"
       }
     },
     {
@@ -78,8 +77,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swift-server/swift-service-lifecycle.git",
       "state" : {
-        "revision" : "e7187309187695115033536e8fc9b2eb87fd956d",
-        "version" : "2.8.0"
+        "revision" : "7f9326b0326ff86e3646295ea6e891f68c471c5e",
+        "version" : "2.12.0"
       }
     },
     {
@@ -96,8 +95,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/scinfu/SwiftSoup",
       "state" : {
-        "revision" : "4206bc7b8bd9a4ff8e9511211e1b4bff979ef9c4",
-        "version" : "2.11.1"
+        "revision" : "8d6ad267714cac3ae747cefdd21f7a6665006e1f",
+        "version" : "2.13.7"
       }
     }
   ],

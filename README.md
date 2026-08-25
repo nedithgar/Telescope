@@ -14,66 +14,68 @@ Telescope is an MCP server that enables AI agents to search the web and retrieve
 
 ## 🚀 Quick Start
 
-You can either grab the prebuilt universal macOS binary from GitHub Releases (recommended) or build from source.
+You can either grab the prebuilt universal macOS archive from GitHub Releases (recommended) or build from source.
 
-### 1. Download the Latest Release Binary
+### 1. Download the Latest Release Archive
 
 1. Go to: https://github.com/nedithgar/Telescope/releases/latest
-2. Download the asset: `telescope-server-vX.Y.Z-macOS-universal` (example: `telescope-server-v0.1.0-macOS-universal`)
-3. Download the matching checksum: `telescope-server-vX.Y.Z-macOS-universal.sha256`
+2. Download the asset: `telescope-server-vX.Y.Z-macOS-universal.zip` (example: `telescope-server-v0.1.0-macOS-universal.zip`)
+3. Download the matching checksum: `telescope-server-vX.Y.Z-macOS-universal.zip.sha256`
 4. Verify integrity (substitute the actual version):
 
 ```bash
-shasum -a 256 -c telescope-server-v0.1.0-macOS-universal.sha256
+shasum -a 256 -c telescope-server-v0.1.0-macOS-universal.zip.sha256
 ```
 
 Expected output ends with `OK`.
 
-### 2. Make It Executable & Install (macOS)
+### 2. Extract & Install (macOS)
 
-Install system‑wide (recommended for macOS). This places the binary where it’s already on your PATH.
+Extract the archive, then install the executable and its resource bundle together in a dedicated directory. Invoke the executable by its full path so SwiftPM can locate the adjacent resource bundle.
 
 ```bash
-chmod +x telescope-server-v0.1.0-macOS-universal
-sudo mv telescope-server-v0.1.0-macOS-universal /usr/local/bin/telescope-server
+unzip telescope-server-v0.1.0-macOS-universal.zip
+sudo mkdir -p /usr/local/libexec/telescope
+sudo ditto telescope-server-v0.1.0-macOS-universal /usr/local/libexec/telescope
 ```
+
+Do not move `telescope-server` without the adjacent `ScrubberKit_ScrubberKit.bundle`.
 
 Verify it runs:
 
 ```bash
-telescope-server --help || echo "Install check failed"
+/usr/local/libexec/telescope/telescope-server --help || echo "Install check failed"
 ```
-
 
 ### 3. Add to an MCP-Compatible Client Configuration
 
-Example JSON snippet (macOS install via `/usr/local/bin`):
+Example JSON snippet using the default macOS installation path:
 
 ```json
 {
   "mcpServers": {
     "telescope": {
-      "command": "/usr/local/bin/telescope-server",
+      "command": "/usr/local/libexec/telescope/telescope-server",
       "args": []
     }
   }
 }
 ```
 
-If you used a custom location (e.g. `~/bin/telescope-server`), update the `command` accordingly.
+If you used a custom location, keep the extracted directory intact and update `command` to the `telescope-server` inside it.
 
 ### 4. Optional Runtime Flags
 
 Disable reranking (use raw ordering):
 
 ```bash
-telescope-server --disable-rerank
+/usr/local/libexec/telescope/telescope-server --disable-rerank
 ```
 
 Increase per-host result allowance:
 
 ```bash
-telescope-server --rerank-keep-per-host=3
+/usr/local/libexec/telescope/telescope-server --rerank-keep-per-host=3
 ```
 
 ---
