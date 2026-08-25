@@ -4,6 +4,74 @@ import Testing
 @testable import Telescope
 
 @Suite
+struct DocumentContentFormatTests {
+    @Test("Markdown content is selected when available")
+    func markdownContentIsSelectedWhenAvailable() {
+        let selected = TelescopeSearchService.selectContent(
+            format: .markdown,
+            html: "<h1>HTML</h1>",
+            text: "Plain text",
+            markdown: "# Markdown"
+        )
+
+        #expect(selected.content == "# Markdown")
+        #expect(selected.format == .markdown)
+    }
+
+    @Test("Empty Markdown falls back to plain text")
+    func emptyMarkdownFallsBackToPlainText() {
+        let selected = TelescopeSearchService.selectContent(
+            format: .markdown,
+            html: "<p>HTML</p>",
+            text: "Plain text",
+            markdown: " \n\t "
+        )
+
+        #expect(selected.content == "Plain text")
+        #expect(selected.format == .text)
+    }
+
+    @Test("Plain text can be explicitly selected")
+    func plainTextCanBeExplicitlySelected() {
+        let selected = TelescopeSearchService.selectContent(
+            format: .text,
+            html: "<p>HTML</p>",
+            text: "Plain text",
+            markdown: "**Markdown**"
+        )
+
+        #expect(selected.content == "Plain text")
+        #expect(selected.format == .text)
+    }
+
+    @Test("Rendered HTML requires explicit selection")
+    func renderedHTMLRequiresExplicitSelection() {
+        let selected = TelescopeSearchService.selectContent(
+            format: .html,
+            html: "<p>HTML</p>",
+            text: "Plain text",
+            markdown: "**Markdown**"
+        )
+
+        #expect(selected.content == "<p>HTML</p>")
+        #expect(selected.format == .html)
+    }
+
+    @Test("Only supported format names are accepted", arguments: [
+        ("markdown", DocumentContentFormat.markdown),
+        ("text", DocumentContentFormat.text),
+        ("html", DocumentContentFormat.html),
+    ])
+    func onlySupportedFormatNamesAreAccepted(
+        rawValue: String,
+        expected: DocumentContentFormat
+    ) {
+        #expect(DocumentContentFormat(rawValue: rawValue) == expected)
+        #expect(DocumentContentFormat(rawValue: rawValue.uppercased()) == nil)
+    }
+}
+
+@Suite
 struct StandardOutputIntegrationTests {
     // Regression test: ScrubberKit previously printed extraction details to stdout.
     // Telescope reserves stdout for MCP JSON-RPC, so such output corrupts the protocol stream.

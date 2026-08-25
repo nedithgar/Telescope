@@ -1,11 +1,11 @@
 ## 🔭 What is Telescope?
 
-Telescope is an MCP server that enables AI agents to search the web and retrieve cleaned, readable text content from search results without any search engine API keys, bridging the gap between AI agents and web content by providing structured access to web information straight from your local machine.
+Telescope is an MCP server that enables AI agents to search the web and retrieve readable page content from search results without any search engine API keys, bridging the gap between AI agents and web content by providing access to web information straight from your local machine.
 
 ### Key Features
 
 - **Web Search Integration** - Search the web using natural language queries
-- **Cleaned Text Extraction** - Automatically removes ads, navigation, and other noise using ScrubberKit
+- **Multiple Content Formats** - Returns Markdown by default with plain-text fallback, with explicit plain-text and rendered-HTML options
 - **Result Re-Ranking (Default On)** - Intelligent heuristic + BM25 based URL re-ranking powered by ScrubberKit to prioritize higher quality, deduplicated sources (can be disabled with `--disable-rerank`)
 - **No API Keys Required** - Works out of the box; does NOT rely on Google/Bing/third‑party search API keys
 - **Configurable Results** - Control the number of search results (10-20 documents)
@@ -128,12 +128,12 @@ Telescope performs discovery and retrieval directly via ScrubberKit's integrated
 - Supply Bing, SerpAPI, or other paid API credentials
 - Manage rate limits or billing for third-party search APIs
 
-Just build and run—Telescope will return cleaned textual excerpts from real web pages. (Normal network access from your machine is, of course, required.)
+Just build and run—Telescope will return Markdown excerpts from real web pages, falling back to plain text when needed. (Normal network access from your machine is, of course, required.)
 
 ### Default Behavior
 
 - **Result Limit**: 10-20 documents per search (configurable per request, clamped to this range)
-- **Text Truncation**: Each document is limited to 20,000 characters to optimize token usage
+- **Content Truncation**: Each document is limited to 20,000 characters to optimize token usage
 - **Thread Safety**: All operations are performed on the main thread
 - **Re-Ranking**: Enabled by default. Pass `--disable-rerank` as a command line argument to the server binary to fall back to raw engine ordering.
 
@@ -161,19 +161,20 @@ Use a value > 0. Set a very large number to effectively disable the cap.
 
 ### `searchweb`
 
-Search the web for a query and return cleaned textual page excerpts.
+Search the web for a query and return extracted page excerpts. Markdown is returned by default, with automatic plain-text fallback when Markdown conversion produces no content.
 
 **Parameters:**
 - `query` (required): The search query keywords
 - `limit` (optional): Maximum number of documents to return (default: 10, max: 20)
+- `format` (optional): Content representation: `markdown` (default), `text`, or `html`. Raw rendered HTML is returned only when explicitly requested.
 
 ## 📚 Architecture
 
 Telescope uses a modern service-based architecture:
 
-- **Telescope** (Library) - Core service (`TelescopeSearchService`) for web searching and text extraction using ScrubberKit
-  - `SearchDocument` - Lightweight, Sendable document structure for serialization
-  - `search(query:limit:)` - Async search method that runs ScrubberKit on main thread
+- **Telescope** (Library) - Core service (`TelescopeSearchService`) for web searching and content extraction using ScrubberKit
+  - `SearchDocument` - Lightweight, Sendable document structure containing the selected content representation
+  - `search(query:limit:format:)` - Async search method that runs ScrubberKit on main thread
   - `formatResults(query:documents:)` - Formats search results as readable text
 - **TelescopeServer** (Executable) - MCP server that exposes the Telescope service to AI agents
   - Handles `ListTools` and `CallTool` MCP methods

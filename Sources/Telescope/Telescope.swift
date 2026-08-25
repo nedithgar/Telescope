@@ -2,17 +2,49 @@ import Foundation
 import MCP
 import ScrubberKit
 
-/// Lightweight document representation to avoid exposing ScrubberKit internals directly
+/// Website content representations exposed by Telescope.
+public enum DocumentContentFormat: String, CaseIterable, Codable, Sendable {
+    /// Rendered page content converted to Markdown. Falls back to plain text when empty.
+    case markdown
+    /// Rendered page content flattened to plain text.
+    case text
+    /// Rendered DOM serialized as HTML.
+    case html
+}
+
+/// Lightweight document representation to avoid exposing ScrubberKit internals directly.
 public struct SearchDocument: Codable, Sendable {
     public let title: String
     public let url: String
-    public let plainText: String
+    public let content: String
+    public let format: DocumentContentFormat
     
-    public init(title: String, url: String, plainText: Substring) {
+    public init(
+        title: String,
+        url: String,
+        content: Substring,
+        format: DocumentContentFormat
+    ) {
         self.title = title
         self.url = url
-        self.plainText = String(plainText)
+        self.content = String(content)
+        self.format = format
     }
+
+    @available(*, deprecated, message: "Use content instead")
+    public var plainText: String {
+        content
+    }
+
+    @available(*, deprecated, message: "Use init(title:url:content:format:) instead")
+    public init(title: String, url: String, plainText: Substring) {
+        self.init(title: title, url: url, content: plainText, format: .text)
+    }
+}
+
+struct SelectedDocumentContent: Equatable, Sendable {
+    let content: String
+    let format: DocumentContentFormat
 }
 
 /// Service for performing web searches using ScrubberKit
@@ -33,8 +65,13 @@ public struct TelescopeSearchService: Sendable {
     /// - Parameters:
     ///   - query: The search query keywords
     ///   - limit: Maximum number of documents to return (clamped between 10-20)
+    ///   - format: Content representation to return. Defaults to Markdown.
     /// - Returns: Array of search documents
-    public func search(query: String, limit: Int = 10) async -> [SearchDocument] {
+    public func search(
+        query: String,
+        limit: Int = 10,
+        format: DocumentContentFormat = .markdown
+    ) async -> [SearchDocument] {
         let adjustedLimit: Int
         if limit < 10 {
             adjustedLimit = 10
@@ -70,12 +107,19 @@ public struct TelescopeSearchService: Sendable {
                     scrubber = Scrubber(query: query)
                 }
                 scrubber.run(limitation: adjustedLimit) { documents in
-                    // Map to lightweight serializable structure using direct property access
+                    // Map to a lightweight serializable structure using the requested representation.
                     let mappedDocuments = documents.map { document in
-                        SearchDocument(
+                        let selectedContent = Self.selectContent(
+                            format: format,
+                            html: document.document,
+                            text: document.textDocument,
+                            markdown: document.markdownDocument
+                        )
+                        return SearchDocument(
                             title: document.title,
                             url: document.url.absoluteString,
-                            plainText: Self.truncateText(document.textDocument, maxCharacters: 20_000)
+                            content: Self.truncateText(selectedContent.content, maxCharacters: 20_000),
+                            format: selectedContent.format
                         )
                     }
                     continuation.resume(returning: mappedDocuments)
@@ -93,9 +137,30 @@ public struct TelescopeSearchService: Sendable {
         var output = "Search results for: \(query)\n\n"
         for (index, document) in documents.enumerated() {
             output += "# Result \(index + 1): \(document.title)\nURL: \(document.url)\n\n"
-            output += document.plainText + "\n\n"
+            output += document.content + "\n\n"
         }
         return output
+    }
+
+    /// Select the requested ScrubberKit representation.
+    /// Markdown falls back to plain text when conversion produces no usable content.
+    static func selectContent(
+        format: DocumentContentFormat,
+        html: String,
+        text: String,
+        markdown: String
+    ) -> SelectedDocumentContent {
+        switch format {
+        case .markdown:
+            guard !markdown.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                return .init(content: text, format: .text)
+            }
+            return .init(content: markdown, format: .markdown)
+        case .text:
+            return .init(content: text, format: .text)
+        case .html:
+            return .init(content: html, format: .html)
+        }
     }
     
     /// Intelligently truncate text to a maximum character count
