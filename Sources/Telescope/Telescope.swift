@@ -132,7 +132,11 @@ public struct TelescopeSearchService: Sendable {
         }
     }
     
-    /// Format search results as text output
+    /// Format search results as a single readable text report.
+    ///
+    /// A document's `format` describes only its `content`; it does not change the
+    /// report envelope. HTML excerpts are therefore surrounded by text metadata
+    /// and are not intended to be parsed together as one standalone HTML document.
     /// - Parameters:
     ///   - query: The original search query
     ///   - documents: The search results to format

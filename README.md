@@ -163,10 +163,12 @@ Use a value > 0. Set a very large number to effectively disable the cap.
 
 Search the web for a query and return extracted page excerpts. Markdown is returned by default, with automatic plain-text fallback when Markdown conversion produces no content.
 
+The selected `format` applies to each page-content excerpt, not to the enclosing tool response. For every format, `searchweb` returns one readable text report containing the query and each result's title and URL. HTML excerpts are included as rendered DOM serialization, but remain subject to the 20,000-character limit and are not guaranteed to be balanced, standalone documents or to form one valid HTML document when multiple results are returned.
+
 **Parameters:**
 - `query` (required): The search query keywords
 - `limit` (optional): Maximum number of documents to return (default: 10, max: 20)
-- `format` (optional): Content representation: `markdown` (default), `text`, or `html`. Raw rendered HTML is returned only when explicitly requested.
+- `format` (optional): Representation used for each page-content excerpt: `markdown` (default), `text`, or `html`. Rendered HTML excerpts are returned only when explicitly requested.
 
 ## 📚 Architecture
 
