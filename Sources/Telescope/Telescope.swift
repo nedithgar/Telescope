@@ -115,6 +115,8 @@ public struct TelescopeSearchService: Sendable {
                             text: document.textDocument,
                             markdown: document.markdownDocument
                         )
+                        // Every representation is returned as a size-bounded excerpt. In particular,
+                        // truncated HTML is not guaranteed to remain a balanced, standalone document.
                         return SearchDocument(
                             title: document.title,
                             url: document.url.absoluteString,
