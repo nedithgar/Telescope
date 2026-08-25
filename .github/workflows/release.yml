@@ -25,7 +25,7 @@ jobs:
       PRODUCT_EXECUTABLE: 'telescope-server'
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -93,14 +93,14 @@ jobs:
             echo "Tag version matches source version: $src_ver"
 
       - name: Cache Swift build
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .build
           key: ${{ runner.os }}-swift-${{ env.SWIFT_VERSION }}-${{ hashFiles('Package.resolved') }}
           restore-keys: |
             ${{ runner.os }}-swift-${{ env.SWIFT_VERSION }}-
       - name: Cache Swiftly toolchains
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.swiftly/toolchains
           key: ${{ runner.os }}-swiftly-${{ env.SWIFT_VERSION }}
@@ -173,7 +173,7 @@ jobs:
 
       - name: Upload artifacts (workflow)
         if: steps.maybe_skip.outputs.skip != 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: telescope-binaries-${{ steps.vars.outputs.version }}
           path: artifacts/*
@@ -181,7 +181,7 @@ jobs:
 
       - name: Create GitHub Release
         if: steps.maybe_skip.outputs.skip != 'true'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           name: Telescope v${{ steps.vars.outputs.version }}
           tag_name: ${{ steps.vars.outputs.raw_tag }}
