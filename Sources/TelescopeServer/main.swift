@@ -39,7 +39,7 @@ struct TelescopeServerMain {
             return handler
         }
         let logger = Logger(label: "dev.telescope.server")
-        let version = "0.0.2"
+        let version = "0.0.3"
 
         // Parse CLI arguments early
         let args = Array(CommandLine.arguments.dropFirst()) // skip executable name
