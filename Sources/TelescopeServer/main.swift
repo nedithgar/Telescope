@@ -123,11 +123,29 @@ struct TelescopeServerMain {
         // CallTool handler performing the actual search
         await server.withMethodHandler(CallTool.self) { params in
             guard params.name == "searchweb" else {
-                return .init(content: [.text("Unknown tool: \(params.name)")], isError: true)
+                return .init(
+                    content: [
+                        .text(
+                            text: "Unknown tool: \(params.name)",
+                            annotations: nil,
+                            _meta: nil
+                        )
+                    ],
+                    isError: true
+                )
             }
             let query = params.arguments?["query"]?.stringValue ?? ""
             guard !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                return .init(content: [.text("Missing required 'query' argument")], isError: true)
+                return .init(
+                    content: [
+                        .text(
+                            text: "Missing required 'query' argument",
+                            annotations: nil,
+                            _meta: nil
+                        )
+                    ],
+                    isError: true
+                )
             }
             let rawLimit = params.arguments?["limit"]?.intValue ?? params.arguments?["limit"]?.doubleValue.map { Int($0) }
             let limit = rawLimit ?? 10
@@ -136,7 +154,10 @@ struct TelescopeServerMain {
             let documents = await searchService.search(query: query, limit: limit)
             let output = searchService.formatResults(query: query, documents: documents)
             
-            return .init(content: [.text(output)], isError: false)
+            return .init(
+                content: [.text(text: output, annotations: nil, _meta: nil)],
+                isError: false
+            )
         }
 
         let transport = StdioTransport(logger: logger)
