@@ -1,5 +1,5 @@
 {
-  "originHash" : "f43e6b7fb6ebdfffff7e980ec6010d1f0f14ffa1d0de0a18495946065bd1653a",
+  "originHash" : "6d2a4dadf5436d1ac715ce288d7140ca82765ddd8806e659d9ea6689b3997041",
   "pins" : [
     {
       "identity" : "eventsource",
@@ -65,12 +65,21 @@
       }
     },
     {
+      "identity" : "swift-nio",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-nio.git",
+      "state" : {
+        "revision" : "0b18836bd8b0162e7e17a995a3fbee20ed8f3b2b",
+        "version" : "2.101.3"
+      }
+    },
+    {
       "identity" : "swift-sdk",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/modelcontextprotocol/swift-sdk.git",
       "state" : {
-        "revision" : "c0407a0b52677cb395d824cac2879b963075ba8c",
-        "version" : "0.10.2"
+        "revision" : "a0ae212ebf6eab5f754c3129608bc5557637e605",
+        "version" : "0.12.1"
       }
     },
     {

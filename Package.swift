@@ -19,7 +19,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/Lakr233/ScrubberKit.git", exact: "0.1.0"),
-        .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", exact: "0.10.2"),
+        .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", exact: "0.12.1"),
         .package(url: "https://github.com/swift-server/swift-service-lifecycle.git", exact: "2.8.0")
     ],
     targets: [
