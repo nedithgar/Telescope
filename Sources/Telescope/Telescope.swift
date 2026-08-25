@@ -109,6 +109,8 @@ public struct TelescopeSearchService: Sendable {
                 scrubber.run(limitation: adjustedLimit) { documents in
                     // Map to a lightweight serializable structure using the requested representation.
                     let mappedDocuments = documents.map { document in
+                        // ScrubberKit materializes and stores all representations before invoking
+                        // this completion handler, so these property reads trigger no conversions.
                         let selectedContent = Self.selectContent(
                             format: format,
                             html: document.document,
