@@ -39,7 +39,7 @@ struct TelescopeServerMain {
             return handler
         }
         let logger = Logger(label: "dev.telescope.server")
-        let version = "0.0.3"
+        let version = "0.0.4"
 
         // Parse CLI arguments early
         let args = Array(CommandLine.arguments.dropFirst()) // skip executable name
@@ -97,7 +97,7 @@ struct TelescopeServerMain {
         // ListTools handler exposing a single tool: searchweb
         let rerankStateDesc = disableRerank ? "off" : "on"
         let hostCapDesc = rerankKeepPerHost.map(String.init) ?? "none"
-        let toolDescription = "Search the web and return cleaned textual page excerpts (ScrubberKit; rerank: \(rerankStateDesc); host cap: \(hostCapDesc))."
+        let toolDescription = "Search the web and return extracted page excerpts (Markdown by default with plain-text fallback; ScrubberKit; rerank: \(rerankStateDesc); host cap: \(hostCapDesc))."
         await server.withMethodHandler(ListTools.self) { _ in
             let tool = Tool(
                 name: "searchweb",
@@ -112,6 +112,16 @@ struct TelescopeServerMain {
                         "limit": .object([
                             "type": .string("number"),
                             "description": .string("Maximum number of documents to return (default 10, max 20)")
+                        ]),
+                        "format": .object([
+                            "type": .string("string"),
+                            "enum": .array([
+                                .string(DocumentContentFormat.markdown.rawValue),
+                                .string(DocumentContentFormat.text.rawValue),
+                                .string(DocumentContentFormat.html.rawValue)
+                            ]),
+                            "default": .string(DocumentContentFormat.markdown.rawValue),
+                            "description": .string("Content format: markdown (default, falls back to text when empty), text, or html")
                         ])
                     ]),
                     "required": .array([.string("query")])
@@ -150,8 +160,29 @@ struct TelescopeServerMain {
             let rawLimit = params.arguments?["limit"]?.intValue ?? params.arguments?["limit"]?.doubleValue.map { Int($0) }
             let limit = rawLimit ?? 10
 
+            let format: DocumentContentFormat
+            if let formatValue = params.arguments?["format"] {
+                guard let formatName = formatValue.stringValue,
+                      let requestedFormat = DocumentContentFormat(rawValue: formatName)
+                else {
+                    return .init(
+                        content: [
+                            .text(
+                                text: "Invalid 'format' argument. Expected one of: markdown, text, html",
+                                annotations: nil,
+                                _meta: nil
+                            )
+                        ],
+                        isError: true
+                    )
+                }
+                format = requestedFormat
+            } else {
+                format = .markdown
+            }
+
             // Perform search using the Telescope service
-            let documents = await searchService.search(query: query, limit: limit)
+            let documents = await searchService.search(query: query, limit: limit, format: format)
             let output = searchService.formatResults(query: query, documents: documents)
             
             return .init(
